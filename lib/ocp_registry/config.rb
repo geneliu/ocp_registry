@@ -8,7 +8,6 @@ module Ocp::Registry
     attr_accessor :http_user
     attr_accessor :http_password
     attr_accessor :db
-    attr_accessor :cloud_manager
     attr_accessor :application_manager
 
     def configure(config)
@@ -25,6 +24,8 @@ module Ocp::Registry
 
       @db = connect_db(config["db"])
 
+      migrate_db if @db
+
       plugin = config["cloud"]["plugin"]
       begin
         require "ocp_registry/cloud_manager/#{plugin}"
@@ -32,7 +33,20 @@ module Ocp::Registry
         raise ConfigError, "Could not find Provider Plugin: #{plugin}"
       end
       @cloud_manager = Ocp::Registry::CloudManager.const_get(plugin.capitalize).new(config["cloud"])
-      @application_manager = Ocp::Registry::ApplicationManager.new(@cloud_manager)
+      
+      @mail_client = init_mail_client(config["mail"])
+      
+      @application_manager = Ocp::Registry::ApplicationManager.new(@cloud_manager,@mail_client)
+    end
+
+    def init_mail_client(mail_config)
+      return unless mail_config
+      
+    end
+
+    def migrate_db
+      Sequel.extension :migration
+      Sequel::Migrator.apply(@db,File.expand_path('./lib/ocp_registry/db'))
     end
 
     def connect_db(db_config)
