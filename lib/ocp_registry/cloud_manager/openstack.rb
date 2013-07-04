@@ -42,23 +42,16 @@ module Ocp::Registry
         end
       end
 
-      # Get the list of IPs belonging to this instance
-      def instance_ips(instance_id)
-        # If we get an Unauthorized error, it could mean that the OpenStack auth token has expired, so we are
-        # going renew the fog connection one time to make sure that we get a new non-expired token.
-        retried = false
-        begin
-          instance  = openstack.servers.find { |s| s.name == instance_id }
-        rescue Excon::Errors::Unauthorized => e
-          unless retried
-            retried = true
-            @openstack = nil
-            retry
-          end
-          raise ConnectionError, "Unable to connect to OpenStack API: #{e.message}"
-        end
-        raise InstanceNotFound, "Instance `#{instance_id}' not found" unless instance
-        return (instance.private_ip_addresses + instance.floating_ip_addresses).compact
+      def create_tenant
+
+      end
+
+      def create_user
+        
+      end
+
+      def add_user_to_tenant
+        
       end
 
     end

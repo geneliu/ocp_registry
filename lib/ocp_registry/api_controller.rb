@@ -18,9 +18,9 @@ module Ocp::Registry
 
 	# get application list
 	get '/v1/applications' do
-
-		@application_manager.list
-
+    email = params[:email]
+		data = @application_manager.list(email)
+		json(data)
 	end
 
 
@@ -32,7 +32,12 @@ module Ocp::Registry
 
 	# create an application
 	post '/v1/applications' do
-		application = @application_manager.create(Yajl.load(request.body.read))
+    app_info = Yajl.load(request.body.read)
+    if app_info.kind_of?(Hash) && app_info['settings'].kind_of?(Hash)
+      app_info[:settings] = json(app_info['settings']) 
+    end
+		application = @application_manager.create(app_info)
+    @logger.debug(application) 
 		json(application)
 	end
 
@@ -46,7 +51,7 @@ module Ocp::Registry
 	post '/v1/applications/:id/refuse' do
 	  protected!
 	  body = Yajl.load(request.body.read)
-	  @application_manager.refuse(params[:id],body[:comment]||'')
+	  @application_manager.refuse(params[:id],body['comments']||'')
 	end
 
 
