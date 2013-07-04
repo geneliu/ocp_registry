@@ -1,0 +1,27 @@
+---
+loglevel: debug
+logfile: tmp/registry.log
+
+http:
+  port: 6799
+  user: admin
+  password: admin
+
+db:
+  adapter: mysql    
+  user: registry     
+  password: registry 
+  host: 127.0.0.1    
+  port: 3306        
+  database: registry
+  connection_options: 
+      max_connections: 32
+      pool_timeout: 10
+
+cloud:
+  plugin: openstack 
+  openstack:
+    auth_url: <%= auth_url %>
+    username: <%= username %>
+    api_key: <%= api_key %>
+    tenant: <%= tenant %>

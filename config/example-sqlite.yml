@@ -1,0 +1,20 @@
+---
+loglevel: debug
+#logfile: tmp/registry.log
+
+http:
+  port: 6799
+  user: admin
+  password: admin
+
+db:
+  adapter: sqlite
+  database: tmp/registry.db 
+
+cloud:
+  plugin: openstack 
+  openstack:
+    auth_url: <%= auth_url %>
+    username: <%= username %>
+    api_key: <%= api_key %>
+    tenant: <%= tenant %>
