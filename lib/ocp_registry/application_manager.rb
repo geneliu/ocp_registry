@@ -10,32 +10,41 @@ module Ocp::Registry
 		end
 
 		def list(email=nil)
-			data = []
 			if email
-				result = Ocp::Registry::Models::RegistryApplication.reverse_order(:created_at).where(:email => email)
+				results = Ocp::Registry::Models::RegistryApplication.reverse_order(:created_at).where(:email => email)
 			else
-				result = Ocp::Registry::Models::RegistryApplication.reverse_order(:created_at).all
+				results = Ocp::Registry::Models::RegistryApplication.reverse_order(:created_at).all
 			end
-			
-			result.each do |app|
-				@logger.debug(app.to_hash)
-				data << app.to_hash
-			end
-
-			data
-
+		
+			results
 		end
 
 		def show(app_id)
-			result = {}
-			result = Ocp::Registry::Models::RegistryApplication[:id => app_id]
-			result.to_hash
+			get_application(app_id)
 		end
 
 		def approve(app_id)
-			tenant = @cloud_manager.create_tenant
-			user = @cloud_manager.create_user
-			@cloud_manager.add_user_to_tenant(tenant, user)
+			app_info = get_application(app_id)
+
+			# create project tenant and user
+			tenant = @cloud_manager.create_tenant(app_info.project, app_info.discription)
+
+			@logger.info("Project [#{tenant.name}] - [#{tenant.id}] has been created with detail json - #{tenant.to_json}")
+
+			password = gen_password
+			user = @cloud_manager.create_user(parse_email(app_info.email)[:name], tenant.id, password, app_info.email)
+
+			@logger.info("User [#{user.name}] - [#{user.id}] has been created with detail json - #{tenant.to_json}")
+			@logger.debug("Password is #{password}")
+
+			role = @cloud_manager.default_role
+
+			@cloud_manager.tenant_add_user_with_role(tenant, user.id, role.id)
+
+			@logger.info("User [#{user.name}] - [#{user.id}] has been added into project [#{tenant.name}] - [#{tenant.id}]")
+
+			#asign quota to project
+
 			Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
 																								.update(:state => 'APPROVED',
 				                                                :updated_at => Time.now.utc.to_s)
@@ -52,19 +61,43 @@ module Ocp::Registry
 			if @mail_manager
 				@mail_manager.send_mail(info,:refuse)
 			end
-
 		end
 
 		def create(app_info)
-			result = {}
-			app_info.merge! ({:created_at => Time.now.utc.to_s})
-	 		result = Ocp::Registry::Models::RegistryApplication.create(app_info)
-			if @mail_manager
-				@mail_manager.send_mail(info,:pending)
+			if existed_tenant?(app_info['project'])
+				{:message => 'project name has been used'}
+			else
+				result = {}
+		 		result = Ocp::Registry::Models::RegistryApplication.create(app_info)
+				if @mail_manager
+					@mail_manager.send_mail(info,:pending)
+				end
+				result
 			end
-			result.to_hash
 		end
 
+		def existed_tenant?(tenant)
+		  return @cloud_manager.get_tenant_by_name(tenant)? true : false
+		end
+
+		private 
+
+		def get_application(app_id)
+			Ocp::Registry::Models::RegistryApplication[:id => app_id]
+		end
+
+		def gen_password
+			SecureRandom.base64
+		end
+
+		def parse_email(email)
+			return unless email =~ /[a-z0-9_.-]+@[a-z0-9-]+\.[a-z.]+/
+				email =~ /([a-z0-9_.-]+)@([a-z0-9-]+\.[a-z.]+)/
+				{
+					:name => $1 ,
+					:domain => $2
+				}
+		end
 	end
 
 end
