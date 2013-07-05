@@ -63,10 +63,6 @@ module Ocp::Registry
       db
     end
 
-    def uuid
-      SecureRandom.uuid
-    end
-
     def validate_config(config)
       unless config.is_a?(Hash)
         raise ConfigError, "Invalid config format, Hash expected, " \
