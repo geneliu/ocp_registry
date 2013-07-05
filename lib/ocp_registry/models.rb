@@ -4,4 +4,4 @@ module Ocp::Registry
   end
 end
 
-require "ocp_registry/models/registry_application.rb"
+require "ocp_registry/models/registry_application"
