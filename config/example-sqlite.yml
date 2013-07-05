@@ -1,0 +1,23 @@
+---
+loglevel: debug
+logfile: tmp/registry.log
+
+http:
+  port: 6799
+  user: admin
+  password: admin
+
+db:
+  adapter: sqlite
+  database: tmp/registry.db 
+
+
+
+cloud:
+  plugin: openstack 
+  default_role:
+  openstack:
+    auth_url:
+    username:
+    api_key:
+    tenant:
