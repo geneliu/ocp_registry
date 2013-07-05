@@ -23,16 +23,26 @@ module Ocp::Registry
 			get_application(app_id)
 		end
 
+		def default
+			{
+				:email => "user@domain.com" ,
+				:project => "your project name" ,
+				:description => "short description of your project" ,
+				:settings => @cloud_manager.default_quota
+			}
+		end
+
 		def approve(app_id)
 			app_info = get_application(app_id)
 
 			# create project tenant and user
-			tenant = @cloud_manager.create_tenant(app_info.project, app_info.discription)
+			tenant = @cloud_manager.create_tenant(app_info.project, app_info.description)
 
 			@logger.info("Project [#{tenant.name}] - [#{tenant.id}] has been created with detail json - #{tenant.to_json}")
 
-			password = gen_password
-			user = @cloud_manager.create_user(parse_email(app_info.email)[:name], tenant.id, password, app_info.email)
+			password = Ocp::Registry::Common.gen_password
+			username = Ocp::Registry::Common.parse_email(app_info.email)[:name]
+			user = @cloud_manager.create_user(username, tenant.id, password, app_info.email)
 
 			@logger.info("User [#{user.name}] - [#{user.id}] has been created with detail json - #{tenant.to_json}")
 			@logger.debug("Password is #{password}")
@@ -43,11 +53,14 @@ module Ocp::Registry
 
 			@logger.info("User [#{user.name}] - [#{user.id}] has been added into project [#{tenant.name}] - [#{tenant.id}]")
 
-			#asign quota to project
+			#assign quota to project
+
+			settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(app_info.settings))
 
 			Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
 																								.update(:state => 'APPROVED',
-				                                                :updated_at => Time.now.utc.to_s)
+				                                                :updated_at => Time.now.utc.to_s,
+				                                                :settings => Yajl::Encoder.encode(settings) )
 			if @mail_manager
 				@mail_manager.send_mail(info,:approve)
 			end
@@ -86,18 +99,6 @@ module Ocp::Registry
 			Ocp::Registry::Models::RegistryApplication[:id => app_id]
 		end
 
-		def gen_password
-			SecureRandom.base64
-		end
-
-		def parse_email(email)
-			return unless email =~ /[a-z0-9_.-]+@[a-z0-9-]+\.[a-z.]+/
-				email =~ /([a-z0-9_.-]+)@([a-z0-9-]+\.[a-z.]+)/
-				{
-					:name => $1 ,
-					:domain => $2
-				}
-		end
 	end
 
 end

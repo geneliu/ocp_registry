@@ -38,10 +38,14 @@ module Ocp::Registry
       end
     end
 
-  	# get an application details
+  	# get an application detail
   	get '/v1/applications/:id' do
-  		application = @application_manager.show(params[:id])
-  		do_response json(application.to_hash)
+      if(params[:id] == "default")
+        do_response json(@application_manager.default)
+      else
+    		application = @application_manager.show(params[:id])
+    		do_response json(application.to_hash)
+      end
   	end
 
   	# create an application
