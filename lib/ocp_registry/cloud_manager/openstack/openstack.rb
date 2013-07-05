@@ -47,6 +47,10 @@ module Ocp::Registry
         @keystone ||= Fog::Identity.new(@openstack_options)
       end
       
+      def volume
+        @volume ||= Fog::Volume.new(@openstack_options)
+      end
+
       def validate_options(cloud_config)
         unless cloud_config.has_key?("openstack") &&
             cloud_config["openstack"].is_a?(Hash) &&
@@ -59,18 +63,30 @@ module Ocp::Registry
         end
       end
 
-      def tenant_quota_update(nova_quota, cinder_quota)
+      def set_tenant_quota(tenant_id, settings={})
+        compute_quota = set_compute_quota(tenant_id, settings)
+        volume_quota = set_volume_quota(tenant_id, settings)
+        return compute_quota.merge (volume_quota)
       end
 
-      def default_quota_settings
+      def default_quota
+        return @default_quota if @default_quota
+
+        compute_quota = default_compute_quota
+        volume_quota = default_volume_quota
+
+        @default_quota = compute_quota.merge (volume_quota)
+
+        @default_quota
       end
 
       def default_role
         begin
-            get_role_by_name(@default_role_name)
+            @default_role ||= get_role_by_name(@default_role_name)
         rescue Fog::Errors::Error => e
             @logger.error "Default role [#{cloud_config["default_role"]}] is not found !"
         end
+        @default_role
       end
 
     end
