@@ -20,6 +20,7 @@ db:
 
 cloud:
   plugin: openstack 
+  default_role:
   openstack:
     auth_url: <%= auth_url %>
     username: <%= username %>

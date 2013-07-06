@@ -11,13 +11,11 @@ db:
   adapter: sqlite
   database: tmp/registry.db 
 
-
-
 cloud:
   plugin: openstack 
   default_role:
   openstack:
-    auth_url:
-    username:
-    api_key:
-    tenant:
+    auth_url: <%= auth_url %>
+    username: <%= username %>
+    api_key: <%= api_key %>
+    tenant: <%= tenant %>
