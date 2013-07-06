@@ -11,4 +11,6 @@ module Ocp::Registry
   class ConfigError < Error; end
   class ConnectionError < Error; end
 
+  class CloudError < Error ; end
+
 end

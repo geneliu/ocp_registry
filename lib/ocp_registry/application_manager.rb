@@ -45,7 +45,6 @@ module Ocp::Registry
 			user = @cloud_manager.create_user(username, tenant.id, password, app_info.email)
 
 			@logger.info("User [#{user.name}] - [#{user.id}] has been created with detail json - #{tenant.to_json}")
-			@logger.debug("Password is #{password}")
 
 			role = @cloud_manager.default_role
 

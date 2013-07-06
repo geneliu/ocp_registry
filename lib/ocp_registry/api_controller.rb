@@ -6,14 +6,20 @@ module Ocp::Registry
   	not_found do
       exception = request.env["sinatra.error"]
       @logger.error(exception.message)
-      do_response json(:message => "not_found")
+      do_response json(:status => "not_found")
     end
 
     error do
       exception = request.env["sinatra.error"]
       @logger.error(exception)
       status(500)
-      do_response json(:message => "error")
+      do_response json(:status => "error")
+    end
+
+    error Ocp::Registry::Error do
+      error = request.env["sinatra.error"]
+      status(error.code)
+      do_response json(:status => "error", :message => error.message)
     end
 
   	# get application list
@@ -56,7 +62,6 @@ module Ocp::Registry
       end
   		application = @application_manager.create(app_info)
       app_info = application.to_hash
-      @logger.debug(app_info) 
   		do_response json(app_info)
   	end
 
@@ -64,7 +69,7 @@ module Ocp::Registry
   	post '/v1/applications/:id/approve' do
   	  protected!
   	  @application_manager.approve(params[:id])
-      do_response json(:message => "ok")
+      do_response json(:status => "ok")
   	end
 
   	# refuse an application
@@ -72,7 +77,7 @@ module Ocp::Registry
   	  protected!
   	  body = Yajl.load(request.body.read)
   	  @application_manager.refuse(params[:id],body['comments']||'')
-      do_response json(:message => "ok")
+      do_response json(:status => "ok")
   	end
 
 

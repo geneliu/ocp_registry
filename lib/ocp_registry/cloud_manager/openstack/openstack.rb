@@ -33,6 +33,7 @@ module Ocp::Registry
           :openstack_endpoint_type => @openstack_properties["endpoint_type"]
         }
         @default_role_name =  cloud_config["default_role"]
+        default_role
       end
 
       def logger
@@ -64,29 +65,56 @@ module Ocp::Registry
       end
 
       def set_tenant_quota(tenant_id, settings={})
-        compute_quota = set_compute_quota(tenant_id, settings)
-        volume_quota = set_volume_quota(tenant_id, settings)
-        return compute_quota.merge (volume_quota)
+        with_openstack do
+          compute_quota = set_compute_quota(tenant_id, settings)
+          volume_quota = set_volume_quota(tenant_id, settings)
+        end
+        result =  compute_quota.merge (volume_quota) if (compute_quota && volume_quota)
+        cloud_error "Quota for #{tenant_id} has not been set" unless result
+        result
       end
 
       def default_quota
         return @default_quota if @default_quota
-
-        compute_quota = default_compute_quota
-        volume_quota = default_volume_quota
-
-        @default_quota = compute_quota.merge (volume_quota)
-
+        with_openstack do
+          compute_quota = default_compute_quota
+          volume_quota = default_volume_quota
+          @default_quota = compute_quota.merge (volume_quota)
+        end
+        cloud_error "Default Quota is not found" unless @default_quota
         @default_quota
       end
 
       def default_role
-        begin
-            @default_role ||= get_role_by_name(@default_role_name)
-        rescue Fog::Errors::Error => e
-            @logger.error "Default role [#{cloud_config["default_role"]}] is not found !"
+        with_openstack do 
+          @default_role ||= get_role_by_name(@default_role_name)
         end
+        cloud_error "Default Role [#{cloud_config["default_role"]}] is not found" unless @default_role
         @default_role
+      end
+
+      def with_openstack
+        retried = false
+        begin
+          yield
+        rescue Excon::Errors::Unauthorized => e
+          unless retried
+            retried = true
+            @compute = nil
+            @volume = nil
+            @keystone = nil
+            retry
+          end
+          cloud_error "Unable to connect to OpenStack API: #{e.message}", e
+        rescue Excon::Errors::InternalServerError => e
+          cloud_error "OpenStack API Internal Server error. Check debug log for details.", e
+        end
+      end
+
+      def cloud_error(message, exception = nil)
+        @logger.error(message) if @logger
+        @logger.error(exception) if @logger && exception
+        raise Ocp::Registry::CloudError, message
       end
 
     end
