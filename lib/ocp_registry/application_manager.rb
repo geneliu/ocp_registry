@@ -35,6 +35,8 @@ module Ocp::Registry
 		def approve(app_id)
 			app_info = get_application(app_id)
 
+			return {:message => "Application #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
+
 			unless existed_tenant?(app_info.project, :find_local => false) then
 				# create project tenant and user
 				tenant = @cloud_manager.create_tenant(app_info.project, app_info.description)
@@ -63,13 +65,14 @@ module Ocp::Registry
 
 				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(app_info.settings))
 
-				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
+				result = Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
 																									.update(:state => 'APPROVED',
 					                                                :updated_at => Time.now.utc.to_s,
 					                                                :settings => Yajl::Encoder.encode(settings) )
 				if @mail_manager
 					@mail_manager.send_mail(info,:approve)
 				end
+				result
 			else
 				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] name has been used during request time")
 				refuse(app_info.id,"Project Name has been used during request time")
@@ -78,13 +81,15 @@ module Ocp::Registry
 		end
 
 		def refuse(app_id,comments)
-			Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
-																								.update(:state => 'REFUSED',
-																												:updated_at => Time.now.utc.to_s,
-																												:comments => comments)
+			return {:message => "Application #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
+			result = Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
+																												.update(:state => 'REFUSED',
+																																:updated_at => Time.now.utc.to_s,
+																																:comments => comments)
 			if @mail_manager
 				@mail_manager.send_mail(info,:refuse)
 			end
+			result
 		end
 
 		def create(app_info)
