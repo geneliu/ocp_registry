@@ -44,6 +44,10 @@ module Ocp::Registry
 	      def get_role_by_name(name)
 	      	with_openstack { keystone.roles.find {|role| role.name == name} }
 	      end
+
+	      def find_user_by_name(name)
+	      	with_openstack { keystone.get_user_by_name(name) }
+	      end
 			end
 
 		end

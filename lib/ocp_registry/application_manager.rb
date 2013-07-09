@@ -35,34 +35,46 @@ module Ocp::Registry
 		def approve(app_id)
 			app_info = get_application(app_id)
 
-			# create project tenant and user
-			tenant = @cloud_manager.create_tenant(app_info.project, app_info.description)
+			unless existed_tenant?(app_info.project) then
+				# create project tenant and user
+				tenant = @cloud_manager.create_tenant(app_info.project, app_info.description)
 
-			@logger.info("Project [#{tenant.name}] - [#{tenant.id}] has been created with detail json - #{tenant.to_json}")
+				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] has been created with detailed json - #{tenant.to_json}")
 
-			password = Ocp::Registry::Common.gen_password
-			username = Ocp::Registry::Common.parse_email(app_info.email)[:name]
-			user = @cloud_manager.create_user(username, tenant.id, password, app_info.email)
+				password = Ocp::Registry::Common.gen_password
+				username = Ocp::Registry::Common.parse_email(app_info.email)[:name]
 
-			@logger.info("User [#{user.name}] - [#{user.id}] has been created with detail json - #{tenant.to_json}")
+				user = @cloud_manager.find_user_by_name(username)
 
-			role = @cloud_manager.default_role
+				if user.nil?
+					user = @cloud_manager.create_user(username, tenant.id, password, app_info.email)
+					@logger.info("User [#{user.name}] - [#{user.id}] has been created with detailed json - #{tenant.to_json}")
+				else
+					@logger.info("Using existed User [#{user.name}] - [#{user.id}] with detailed json - #{tenant.to_json}")
+				end
 
-			@cloud_manager.tenant_add_user_with_role(tenant, user.id, role.id)
+				role = @cloud_manager.default_role
 
-			@logger.info("User [#{user.name}] - [#{user.id}] has been added into project [#{tenant.name}] - [#{tenant.id}]")
+				@cloud_manager.tenant_add_user_with_role(tenant, user.id, role.id)
 
-			#assign quota to project
+				@logger.info("User [#{user.name}] - [#{user.id}] has been added into project [#{tenant.name}] - [#{tenant.id}] as [#{role.name}] - [#{role.id}]")
 
-			settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(app_info.settings))
+				#assign quota to project
 
-			Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
-																								.update(:state => 'APPROVED',
-				                                                :updated_at => Time.now.utc.to_s,
-				                                                :settings => Yajl::Encoder.encode(settings) )
-			if @mail_manager
-				@mail_manager.send_mail(info,:approve)
+				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(app_info.settings))
+
+				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
+																									.update(:state => 'APPROVED',
+					                                                :updated_at => Time.now.utc.to_s,
+					                                                :settings => Yajl::Encoder.encode(settings) )
+				if @mail_manager
+					@mail_manager.send_mail(info,:approve)
+				end
+			else
+				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] name has been used during request time")
+				refuse(app_info.id,"Project Name has been used during request time")
 			end
+
 		end
 
 		def refuse(app_id,comments)
@@ -96,6 +108,14 @@ module Ocp::Registry
 
 		def get_application(app_id)
 			Ocp::Registry::Models::RegistryApplication[:id => app_id]
+		end
+
+		def prepare_mail_properties(to, template, msg = {})
+			{
+				:to => to ,
+				:template => template ,
+				:msg => msg
+			}
 		end
 
 	end
