@@ -107,7 +107,8 @@ module Ocp::Registry
 
 		def existed_tenant?(tenant, find_local = true)
 			if find_local
-				local_existed = Ocp::Registry::Models::RegistryApplication.where(:project => tenant).count == 0? false : true
+				local_existed = Ocp::Registry::Models::RegistryApplication.where(:project => tenant, :state => 'APPROVED')
+																																	.count == 0? false : true
 				return true if local_existed
 			end
 		  remote_existed = @cloud_manager.get_tenant_by_name(tenant)? true : false
