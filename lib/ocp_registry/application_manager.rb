@@ -35,7 +35,7 @@ module Ocp::Registry
 		def approve(app_id)
 			app_info = get_application(app_id)
 
-			unless existed_tenant?(app_info.project) then
+			unless existed_tenant?(app_info.project, :find_local => false) then
 				# create project tenant and user
 				tenant = @cloud_manager.create_tenant(app_info.project, app_info.description)
 
@@ -100,8 +100,17 @@ module Ocp::Registry
 			end
 		end
 
-		def existed_tenant?(tenant)
-		  return @cloud_manager.get_tenant_by_name(tenant)? true : false
+		def existed_tenant?(tenant, find_local = true)
+			if find_local
+				local_existed = Ocp::Registry::Models::RegistryApplication.where(:project => tenant).count == 0? false : true
+				return true if local_existed
+			end
+		  remote_existed = @cloud_manager.get_tenant_by_name(tenant)? true : false
+		  if remote_existed
+		  	return true
+		  else
+		  	return false
+		  end
 		end
 
 		private 
