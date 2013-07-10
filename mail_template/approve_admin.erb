@@ -1,0 +1,14 @@
+From: <%= mail[:from]%>
+To: <%= mail[:to].kind_of?(Array)? mail[:to].join(";") : mail[:to]%>
+Subject: Approved resource request for project <%= info[:app_info].project %>
+
+Dear Administrator :
+	The resource request for project [<%= info[:app_info].project %>] has been APPROVED at [<%= info[:app_info].created_at %>].
+	The application id is [<%= info[:app_info].id%>].
+
+	You can review all received applications from <a href="<%= info[:applications_link]%>"><%= info[:applications_link]%></a>
+
+	Thanks!
+	OCP registry
+
+(This email is auto-sent by system, please don't reply this mail)

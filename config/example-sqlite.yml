@@ -3,6 +3,7 @@ loglevel: debug
 logfile: tmp/registry.log
 
 http:
+  base_url: localhost
   port: 6799
   user: admin
   password: admin
@@ -11,13 +12,22 @@ db:
   adapter: sqlite
   database: tmp/registry.db 
 
-
-
 cloud:
+  login_url: <dashboard login url>
   plugin: openstack 
   default_role:
   openstack:
-    auth_url:
-    username:
-    api_key:
-    tenant:
+    auth_url: <%= auth_url %>
+    username: <%= username %>
+    api_key: <%= api_key %>
+    tenant: <%= tenant %>
+
+mail:
+  admin_emails:
+  worker: 
+  smtp_server: 
+  port: 
+  helo: 
+  username: 
+  password: 
+  authentication: 

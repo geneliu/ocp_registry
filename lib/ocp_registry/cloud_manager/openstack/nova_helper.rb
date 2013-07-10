@@ -18,12 +18,14 @@ module Ocp::Registry
 				                     "security_group_rules"]
 
 				def default_compute_quota
-					compute.get_quota_defaults(nil).body["quota_set"]
+					with_openstack { compute.get_quota_defaults(nil).body["quota_set"] }
 				end
 
 				def set_compute_quota(tenant_id, hash)
-					settings = Ocp::Registry::Common.hash_filter(hash, NOVA_QUOTA_FIELDS)
-					compute.update_quota(tenant_id,settings).body["quota_set"]
+					with_openstack do 
+						settings = Ocp::Registry::Common.hash_filter(hash, NOVA_QUOTA_FIELDS)
+						compute.update_quota(tenant_id,settings).body["quota_set"]
+					end
 				end
 
 			end

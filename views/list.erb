@@ -1,0 +1,32 @@
+<h1>Projects</h1>
+<table>
+  <tr>
+
+    <th>Name</th>
+  
+    <th>Description</th>
+  
+    <th>Project ID</th>
+  
+    <th>Status</th>
+  
+    <th>Requestor</th>
+  	
+  	<th>Created At</th>
+
+  	<th>Process At</th>
+
+	</tr>
+
+	<% data.each do |app| %>
+		<tr>
+			<td><a href="/v1/applications/<%=app[:id]%>"><%=app[:project]%></a></td>
+			<td><%=app[:description]%></td>
+			<td><%=app[:id]%></td>
+			<td><%=app[:state]%></td>
+			<td><%=app[:email]%></td>
+			<td><%=app[:created_at]%></td>
+			<td><%=app[:updated_at]%></td>
+		</tr>
+	<% end %>
+</table>
