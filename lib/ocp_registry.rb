@@ -14,6 +14,7 @@ require "sinatra/base"
 require "thin"
 require "yajl"
 require "securerandom"
+require "uri"
 
 require "ocp_registry/yaml_helper"
 require "ocp_registry/runner"

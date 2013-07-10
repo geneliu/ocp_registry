@@ -4,11 +4,13 @@ module Ocp::Registry
   class << self
 
     attr_accessor :logger
+    attr_accessor :base_url
     attr_accessor :http_port
     attr_accessor :http_user
     attr_accessor :http_password
     attr_accessor :db
     attr_accessor :application_manager
+    attr_accessor :cloud_login_url
 
     def configure(config)
       validate_config(config)
@@ -18,6 +20,7 @@ module Ocp::Registry
         @logger.level = Logger.const_get(config["loglevel"].upcase)
       end
 
+      @base_url = config["http"]["base_url"] || "127.0.0.1"
       @http_port = config["http"]["port"]
       @http_user = config["http"]["user"]
       @http_password = config["http"]["password"]
@@ -26,6 +29,8 @@ module Ocp::Registry
 
       migrate_db if @db
 
+      @cloud_login_url = config["cloud"]["login_url"]
+      
       plugin = config["cloud"]["plugin"]
       begin
         require "ocp_registry/cloud_manager/#{plugin}"
@@ -34,14 +39,14 @@ module Ocp::Registry
       end
       @cloud_manager = Ocp::Registry::CloudManager.const_get(plugin.capitalize).new(config["cloud"])
       
-      @mail_client = init_mail_client(config["mail"])
+      @mail_client = init_mail_client(config["mail"]) if config["mail"]
       
       @application_manager = Ocp::Registry::ApplicationManager.new(@cloud_manager,@mail_client)
     end
 
     def init_mail_client(mail_config)
-      return unless mail_config
-      
+      require "ocp_registry/mail_client"
+      MailClient.new(mail_config)
     end
 
     def migrate_db

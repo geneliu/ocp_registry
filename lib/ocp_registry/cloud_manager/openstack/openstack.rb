@@ -65,11 +65,12 @@ module Ocp::Registry
       end
 
       def set_tenant_quota(tenant_id, settings={})
+        result = nil
         with_openstack do
           compute_quota = set_compute_quota(tenant_id, settings)
           volume_quota = set_volume_quota(tenant_id, settings)
+          result =  compute_quota.merge (volume_quota) if (compute_quota && volume_quota)
         end
-        result =  compute_quota.merge (volume_quota) if (compute_quota && volume_quota)
         cloud_error "Quota for #{tenant_id} has not been set" unless result
         result
       end
@@ -86,10 +87,12 @@ module Ocp::Registry
       end
 
       def default_role
+        return @default_role if @default_role
         with_openstack do 
           @default_role ||= get_role_by_name(@default_role_name)
         end
         cloud_error "Default Role [#{cloud_config["default_role"]}] is not found" unless @default_role
+        @logger.info("Default Role #{@default_role.name} - #{@default_role.id}")
         @default_role
       end
 

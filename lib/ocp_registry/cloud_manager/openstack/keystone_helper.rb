@@ -46,7 +46,7 @@ module Ocp::Registry
 	      end
 
 	      def find_user_by_name(name)
-	      	with_openstack { keystone.get_user_by_name(name) }
+	      	with_openstack { keystone.users.find {|user| user.name == name} }
 	      end
 			end
 

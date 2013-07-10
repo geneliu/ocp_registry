@@ -3,6 +3,7 @@ loglevel: debug
 logfile: tmp/registry.log
 
 http:
+  base_url: localhost
   port: 6799
   user: admin
   password: admin
@@ -19,6 +20,7 @@ db:
       pool_timeout: 10
 
 cloud:
+  login_url: <dashboard login url>
   plugin: openstack 
   default_role:
   openstack:
@@ -26,3 +28,13 @@ cloud:
     username: <%= username %>
     api_key: <%= api_key %>
     tenant: <%= tenant %>
+
+mail:
+  admin_emails:
+  worker: 
+  smtp_server: 
+  port: 
+  helo: 
+  username: 
+  password: 
+  authentication: 

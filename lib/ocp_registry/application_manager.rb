@@ -68,7 +68,23 @@ module Ocp::Registry
 					                                                :updated_at => Time.now.utc.to_s,
 					                                                :settings => Yajl::Encoder.encode(settings) )
 				if @mail_manager
-					@mail_manager.send_mail(info,:approve)
+					admin_msg = {
+						:app_info => app_info , 
+						:application_link => gen_app_uri(app_id) ,
+						:applications_link => gen_app_uri
+					}
+					mail = prepare_mail_properties(:approve_admin, @mail_manager.admin_emails, admin_msg)
+					@mail_manager.send_mail(mail)
+					user_msg = {
+						:app_info => app_info ,
+						:application_link => gen_app_uri(app_id) ,
+						:applications_link => gen_app_uri(nil, app_info.email) ,
+						:login => Ocp::Registry.cloud_login_url ,
+						:username => username ,
+						:password => password
+					}
+					mail = prepare_mail_properties(:approve_user, app_info.email, user_msg)
+					@mail_manager.send_mail(mail)
 				end
 			else
 				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] name has been used during request time")
@@ -82,8 +98,22 @@ module Ocp::Registry
 																								.update(:state => 'REFUSED',
 																												:updated_at => Time.now.utc.to_s,
 																												:comments => comments)
+			app_info = get_application(app_id)
 			if @mail_manager
-				@mail_manager.send_mail(info,:refuse)
+				admin_msg = {
+					:app_info => app_info , 
+					:application_link => gen_app_uri(app_id) ,
+					:applications_link => gen_app_uri 
+				}
+				mail = prepare_mail_properties(:refuse_admin, @mail_manager.admin_emails, admin_msg)
+				@mail_manager.send_mail(mail)
+				user_msg = {
+					:app_info => app_info , 
+					:application_link => gen_app_uri(app_id) ,
+					:applications_link => gen_app_uri(nil, app_info.email) 
+				}
+				mail = prepare_mail_properties(:refuse_user, app_info.email, user_msg)
+				@mail_manager.send_mail(mail)
 			end
 		end
 
@@ -91,10 +121,22 @@ module Ocp::Registry
 			if existed_tenant?(app_info['project'])
 				{:message => 'project name has been used'}
 			else
-				result = {}
 		 		result = Ocp::Registry::Models::RegistryApplication.create(app_info)
 				if @mail_manager
-					@mail_manager.send_mail(info,:pending)
+					admin_msg = {
+						:app_info => result , 
+						:application_link => gen_app_uri(result.id) ,
+						:applications_link => gen_app_uri 
+					}
+					mail = prepare_mail_properties(:request_admin, @mail_manager.admin_emails, admin_msg)
+					@mail_manager.send_mail(mail)
+					user_msg = {
+						:app_info => result ,
+						:application_link => gen_app_uri(result.id) ,
+						:applications_link => gen_app_uri(nil, result.email) 
+					}
+					mail = prepare_mail_properties(:request_user, result.email, user_msg)
+					@mail_manager.send_mail(mail)
 				end
 				result
 			end
@@ -110,12 +152,25 @@ module Ocp::Registry
 			Ocp::Registry::Models::RegistryApplication[:id => app_id]
 		end
 
-		def prepare_mail_properties(to, template, msg = {})
+		def prepare_mail_properties(template, to, msg = {})
 			{
 				:to => to ,
-				:template => template ,
+				:template => template.to_s ,
 				:msg => msg
 			}
+		end
+
+		def gen_app_uri(app_id = nil, email = nil)
+			host = URI::escape(Ocp::Registry.base_url)
+			port = Ocp::Registry.http_port
+			path = "/applications"
+			if app_id
+				path += URI::escape("/#{app_id}")
+				@logger.info(path)
+			end
+			query = URI::escape("email=#{email}") if email
+
+			uri = URI::HTTP.build(:host => host, :port => port, :path => path, :query => query).to_s
 		end
 
 	end
