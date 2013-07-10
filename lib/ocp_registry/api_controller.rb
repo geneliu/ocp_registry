@@ -6,20 +6,20 @@ module Ocp::Registry
   	not_found do
       exception = request.env["sinatra.error"]
       @logger.error(exception.message)
-      do_response {:status => "not_found"}
+      do_response({:status => "not_found"})
     end
 
     error do
       exception = request.env["sinatra.error"]
       @logger.error(exception)
       status(500)
-      do_response {:status => "error"}
+      do_response({:status => "error"})
     end
 
     error Ocp::Registry::Error do
       error = request.env["sinatra.error"]
       status(error.code)
-      do_response {:status => "error", :message => error.message}
+      do_response({:status => "error", :message => error.message})
     end
 
   	# get application list
