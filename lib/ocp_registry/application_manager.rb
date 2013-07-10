@@ -20,7 +20,9 @@ module Ocp::Registry
 		end
 
 		def show(app_id)
-			get_application(app_id)
+			app_info = get_application(app_id)
+			return {:status => "error", :message => "Application with id - [#{app_id}] is not existed"} if app_info.nil?
+			app_info
 		end
 
 		def default
@@ -34,6 +36,8 @@ module Ocp::Registry
 
 		def approve(app_id)
 			app_info = get_application(app_id)
+
+			return {:status => "error", :message => "Application with id - [#{app_id}] is not existed"} if app_info.nil?
 
 			return {:status => "error", :message => "Application [#{app_info.project}] - [#{app_id}] has been #{app_info.state}"} unless app_info.state == 'PENDING'
 
@@ -100,6 +104,7 @@ module Ocp::Registry
 
 		def refuse(app_id,comments)
 			app_info = get_application(app_id)
+			return {:status => "error", :message => "Application with id - [#{app_id}] is not existed"} if app_info.nil?
 			return {:status => "error", :message => "Application [#{app_info.project}] - #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
 
 			comments ||= "no comments"

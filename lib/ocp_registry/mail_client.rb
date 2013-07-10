@@ -3,7 +3,6 @@ module Ocp::Registry
 
 		require "net/smtp"
 		require "thread"
-		require "erb"
 
 		DEFAULT_WORKER = 1
 		DEFAULT_PORT = '25' 
