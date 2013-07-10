@@ -33,7 +33,6 @@ module Ocp::Registry
           :openstack_endpoint_type => @openstack_properties["endpoint_type"]
         }
         @default_role_name =  cloud_config["default_role"]
-        default_role
       end
 
       def logger
