@@ -35,7 +35,9 @@ module Ocp::Registry
 		def approve(app_id)
 			app_info = get_application(app_id)
 
-			unless existed_tenant?(app_info.project) then
+			return {:message => "Application #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
+
+			unless existed_tenant?(app_info.project, :find_local => false) then
 				# create project tenant and user
 				tenant = @cloud_manager.create_tenant(app_info.project, app_info.description)
 
@@ -63,7 +65,7 @@ module Ocp::Registry
 
 				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(app_info.settings))
 
-				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
+				result = Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
 																									.update(:state => 'APPROVED',
 					                                                :updated_at => Time.now.utc.to_s,
 					                                                :settings => Yajl::Encoder.encode(settings) )
@@ -86,6 +88,7 @@ module Ocp::Registry
 					mail = prepare_mail_properties(:approve_user, app_info.email, user_msg)
 					@mail_manager.send_mail(mail)
 				end
+				result
 			else
 				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] name has been used during request time")
 				refuse(app_info.id,"Project Name has been used during request time")
@@ -94,11 +97,15 @@ module Ocp::Registry
 		end
 
 		def refuse(app_id,comments)
+			app_info = get_application(app_id)
+			return {:message => "Application #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
+
 			Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
 																								.update(:state => 'REFUSED',
 																												:updated_at => Time.now.utc.to_s,
 																												:comments => comments)
 			app_info = get_application(app_id)
+
 			if @mail_manager
 				admin_msg = {
 					:app_info => app_info , 
@@ -115,6 +122,7 @@ module Ocp::Registry
 				mail = prepare_mail_properties(:refuse_user, app_info.email, user_msg)
 				@mail_manager.send_mail(mail)
 			end
+			result
 		end
 
 		def create(app_info)
@@ -142,8 +150,18 @@ module Ocp::Registry
 			end
 		end
 
-		def existed_tenant?(tenant)
-		  return @cloud_manager.get_tenant_by_name(tenant)? true : false
+		def existed_tenant?(tenant, find_local = true)
+			if find_local
+				local_existed = Ocp::Registry::Models::RegistryApplication.where(:project => tenant, :state => 'APPROVED')
+																																	.count == 0? false : true
+				return true if local_existed
+			end
+		  remote_existed = @cloud_manager.get_tenant_by_name(tenant)? true : false
+		  if remote_existed
+		  	return true
+		  else
+		  	return false
+		  end
 		end
 
 		private 
