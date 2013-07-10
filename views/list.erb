@@ -1,32 +1,39 @@
-<h1>Projects</h1>
-<table>
-  <tr>
-
-    <th>Name</th>
-  
-    <th>Description</th>
-  
-    <th>Project ID</th>
-  
-    <th>Status</th>
-  
-    <th>Requestor</th>
-  	
-  	<th>Created At</th>
-
-  	<th>Process At</th>
-
-	</tr>
-
+<div class="page-header">
+	<h1>Project</h1>
+</div>
+<div class="table_wrapper">
+	<table class="table table-bordered table-striped datatable">
+	<thead>
+		<tr>
+		<th  class="sortable normal_column">Name</th>
+		<th  class="sortable normal_column">Description</th>
+		<th  class="sortable normal_column">Project ID</th>
+		<th  class="sortable normal_column">Status</th>
+		<th  class="sortable normal_column">Requestor</th>
+		<th  class="normal_column">Action</th>
+		</tr>
+	</thead>
+	<tbody>
 	<% data.each do |app| %>
 		<tr>
-			<td><a href="/v1/applications/<%=app[:id]%>"><%=app[:project]%></a></td>
-			<td><%=app[:description]%></td>
-			<td><%=app[:id]%></td>
-			<td><%=app[:state]%></td>
-			<td><%=app[:email]%></td>
-			<td><%=app[:created_at]%></td>
-			<td><%=app[:updated_at]%></td>
+			<td class="sortable normal_column"><%=app[:project]%></td>
+			<td class="sortable normal_column"><%=app[:description]%></td>
+			<td class="sortable normal_column"><%=app[:id]%></td>
+			<td class="status_up sortable normal_column"><%=app[:state]%></td>
+			<td class="sortable normal_column"><%=app[:email]%></td>
+			<td class="normal_column">
+				<a href="/v1/applications/<%=app[:id]%>" class="btn btn-small">View</a>
+			</td>
 		</tr>
 	<% end %>
-</table>
+	</tbody>
+	<tfoot>
+      
+      <tr>
+        <td colspan="6">
+          <span class="table_count">Displaying <%=data.size%> items</span>     
+        </td>
+      </tr>
+    </tfoot>
+	</table>
+</div>
