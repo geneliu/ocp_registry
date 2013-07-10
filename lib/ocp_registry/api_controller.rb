@@ -3,6 +3,8 @@ module Ocp::Registry
 
   class ApiController < Sinatra::Base
 
+    set :root, File.join(File.dirname(__FILE__), '../../')
+
   	not_found do
       exception = request.env["sinatra.error"]
       @logger.error(exception.message)
@@ -97,7 +99,7 @@ module Ocp::Registry
       if request.accept? 'application/json' || view.nil?
         json(data)
       else
-        erb view
+        erb view ,:locals => {:data => data}
       end
 
     end
