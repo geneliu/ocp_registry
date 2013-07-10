@@ -6,20 +6,20 @@ module Ocp::Registry
   	not_found do
       exception = request.env["sinatra.error"]
       @logger.error(exception.message)
-      do_response json(:status => "not_found")
+      do_response {:status => "not_found"}
     end
 
     error do
       exception = request.env["sinatra.error"]
       @logger.error(exception)
       status(500)
-      do_response json(:status => "error")
+      do_response {:status => "error"}
     end
 
     error Ocp::Registry::Error do
       error = request.env["sinatra.error"]
       status(error.code)
-      do_response json(:status => "error", :message => error.message)
+      do_response {:status => "error", :message => error.message}
     end
 
   	# get application list
@@ -33,24 +33,24 @@ module Ocp::Registry
       result.each do |app|
         data << app.to_hash
       end
-  		do_response json(data)
+  		do_response(data, :list)
   	end
 
     # check project name 
-    post '/v1/applications/project_ok' do
+    post '/v1/applications/check' do
       if project = params[:project] 
         result = @application_manager.existed_tenant?(project)
-        do_response json(!result)
+        do_response(!result)
       end
     end
 
   	# get an application detail
   	get '/v1/applications/:id' do
       if(params[:id] == "default")
-        do_response json(@application_manager.default)
+        do_response(@application_manager.default, :show)
       else
     		application = @application_manager.show(params[:id])
-    		do_response json(application.to_hash)
+    		do_response(application.to_hash, :show)
       end
   	end
 
@@ -62,14 +62,14 @@ module Ocp::Registry
       end
   		application = @application_manager.create(app_info)
       app_info = application.to_hash
-  		do_response json(app_info)
+  		do_response(app_info, :create)
   	end
 
   	# approve an application
   	post '/v1/applications/:id/approve' do
   	  protected!
   	  result = @application_manager.approve(params[:id])
-      do_response json(result.to_hash)
+      do_response(result.to_hash, :approve)
   	end
 
   	# refuse an application
@@ -79,7 +79,7 @@ module Ocp::Registry
       comments = nil
       comments = body['comments'] if body && body['comments']
       result = @application_manager.refuse(params[:id], comments)
-      do_response json(result.to_hash)
+      do_response(result.to_hash, :refuse)
   	end
 
 
@@ -93,11 +93,11 @@ module Ocp::Registry
 
     private
 
-    def do_response(data)
-      if request.accept? 'application/json'
-        return data
+    def do_response(data, view)
+      if request.accept? 'application/json' || view.nil?
+        json(data)
       else
-        return 'html'
+        erb view
       end
 
     end
