@@ -95,7 +95,7 @@ module Ocp::Registry
 
     private
 
-    def do_response(data, view)
+    def do_response(data, view = nil)
       if request.accept? 'application/json' || view.nil?
         json(data)
       else
