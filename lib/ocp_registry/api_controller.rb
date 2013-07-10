@@ -99,7 +99,9 @@ module Ocp::Registry
       if request.accept? 'application/json' || view.nil?
         json(data)
       else
-        erb view ,:locals => {:data => data}
+        erb :base do 
+          erb view ,:locals => {:data => data}
+        end
       end
 
     end
