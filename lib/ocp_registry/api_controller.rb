@@ -68,16 +68,18 @@ module Ocp::Registry
   	# approve an application
   	post '/v1/applications/:id/approve' do
   	  protected!
-  	  @application_manager.approve(params[:id])
-      do_response json(:status => "ok")
+  	  result = @application_manager.approve(params[:id])
+      do_response json(result.to_hash)
   	end
 
   	# refuse an application
   	post '/v1/applications/:id/refuse' do
   	  protected!
   	  body = Yajl.load(request.body.read)
-  	  @application_manager.refuse(params[:id],body['comments']||'')
-      do_response json(:status => "ok")
+      comments = nil
+      comments = body['comments'] if body && body['comments']
+      result = @application_manager.refuse(params[:id], comments)
+      do_response json(result.to_hash)
   	end
 
 

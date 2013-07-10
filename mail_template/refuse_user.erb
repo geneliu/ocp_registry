@@ -3,8 +3,8 @@ To: <%= mail[:to].kind_of?(Array)? mail[:to].join(";") : mail[:to]%>
 Subject: Refused resource request for project <%= info[:app_info].project %>
 
 Dear User from <%= info[:app_info].email %> :
-	Your resource request for project <%= info[:app_info].project %> has been refused at <%= info[:app_info].created_at %>.
-	Your application id is <%= info[:app_info].id%>.
+	Your resource request for project [<%= info[:app_info].project %>] has been REFUSED at [<%= info[:app_info].created_at %>].
+	Your application id is [<%= info[:app_info].id%>].
 	The comment is :
 		<%= info[:app_info].comments %>
 	

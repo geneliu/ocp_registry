@@ -35,7 +35,7 @@ module Ocp::Registry
 		def approve(app_id)
 			app_info = get_application(app_id)
 
-			return {:message => "Application #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
+			return {:status => "error", :message => "Application [#{app_info.project}] - [#{app_id}] has been #{app_info.state}"} unless app_info.state == 'PENDING'
 
 			unless existed_tenant?(app_info.project, :find_local => false) then
 				# create project tenant and user
@@ -43,15 +43,16 @@ module Ocp::Registry
 
 				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] has been created with detailed json - #{tenant.to_json}")
 
-				password = Ocp::Registry::Common.gen_password
 				username = Ocp::Registry::Common.parse_email(app_info.email)[:name]
 
 				user = @cloud_manager.find_user_by_name(username)
 
 				if user.nil?
+					password = Ocp::Registry::Common.gen_password
 					user = @cloud_manager.create_user(username, tenant.id, password, app_info.email)
 					@logger.info("User [#{user.name}] - [#{user.id}] has been created with detailed json - #{tenant.to_json}")
 				else
+					password = "<your-password-in-other-project>"
 					@logger.info("Using existed User [#{user.name}] - [#{user.id}] with detailed json - #{tenant.to_json}")
 				end
 
@@ -69,6 +70,7 @@ module Ocp::Registry
 																									.update(:state => 'APPROVED',
 					                                                :updated_at => Time.now.utc.to_s,
 					                                                :settings => Yajl::Encoder.encode(settings) )
+				app_info = get_application(app_id)
 				if @mail_manager
 					admin_msg = {
 						:app_info => app_info , 
@@ -88,18 +90,19 @@ module Ocp::Registry
 					mail = prepare_mail_properties(:approve_user, app_info.email, user_msg)
 					@mail_manager.send_mail(mail)
 				end
-				result
+				app_info
 			else
-				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] name has been used during request time")
-				refuse(app_info.id,"Project Name has been used during request time")
+				@logger.info("Project [#{app_info.project}] name has been used during request time")
+				refuse(app_info.id,"Project Name [#{app_info.project}] has been used during request time")
 			end
 
 		end
 
 		def refuse(app_id,comments)
 			app_info = get_application(app_id)
-			return {:message => "Application #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
+			return {:status => "error", :message => "Application [#{app_info.project}] - #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
 
+			comments ||= "no comments"
 			Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
 																								.update(:state => 'REFUSED',
 																												:updated_at => Time.now.utc.to_s,
@@ -122,12 +125,12 @@ module Ocp::Registry
 				mail = prepare_mail_properties(:refuse_user, app_info.email, user_msg)
 				@mail_manager.send_mail(mail)
 			end
-			result
+			app_info
 		end
 
 		def create(app_info)
 			if existed_tenant?(app_info['project'])
-				{:message => 'project name has been used'}
+				{:status => "error", :message => "Project name [#{app_info['project']}] has been used"}
 			else
 		 		result = Ocp::Registry::Models::RegistryApplication.create(app_info)
 				if @mail_manager
