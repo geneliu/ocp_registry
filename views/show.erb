@@ -1,0 +1,173 @@
+		<div class="bordered optDialog">
+			<legend>Review Tenant Request</legend>
+			<ul id="optTab" class="nav nav-tabs">
+				<li><a href="#tenantInfo" data-toggle="tab">Tenant Info</a></li>
+				<li><a href="#quota" data-toggle="tab">Quota</a></li>
+			</ul>
+			
+			<div class="tab-content">
+				<div class="tab-pane" id="tenantInfo">
+					<label>Tenant Name</label>
+					<input type="text" placeholder="Put the tenant name here.">
+					
+					<label>Description</label>
+					<input type="text" placeholder="Put the tenant description here.">
+					
+					<label>Email</label>
+					<input type="text" placeholder="Put your valid email address here.">
+				</div>
+				<div class="tab-pane" id="quota">
+					<label>Metadata Items</label>
+					<input type="text" value="128">
+					
+					<label>VCPUs</label>
+					<input type="text" value="20">
+					
+					<label>Instances</label>
+					<input type="text" value="10">
+					
+					<label>Injected Files</label>
+					<input type="text" value="5">
+					
+					<label>Injected Files Content Bytes</label>
+					<input type="text" value="10240">
+					
+					<label>Volumes</label>
+					<input type="text" value="10">
+					
+					<label>Gigabytes</label>
+					<input type="text" value="1000">
+					
+					<label>RAM(MB)</label>
+					<input type="text" value="51200">
+					
+					<label>Floating IPs</label>
+					<input type="text" value="10">
+					
+					<label>Fixed IPs</label>
+					<input type="text" value="-1">
+					
+					<label>Security Groups</label>
+					<input type="text" value="10">
+					
+					<label>Security Group Rules</label>
+					<input type="text" value="20">
+				</div>
+			</div>
+			
+			<div class="optExplaination" id="optExplaination">
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+			</div>
+			
+			<div class="clear"></div>
+			
+			<div class="optAction" id="optAction">
+				<button id="optAccept" type="button" class="btn btn-success" 
+					data-loading-text="Loading ...">
+					Accept
+				</button>
+				<button id="optReject" type="button" class="btn btn-warning" 
+					data-loading-text="Loading ...">
+					Reject
+				</button>
+				<img class="loadingIcon" id="optActionLoadingIcon" src="pic/loading.gif"  alt="" />
+				<div class="clear"></div>
+			</div>
+						
+		</div>
+
+		<script type="text/javascript">
+
+	$(document).ready(init);
+
+	function init(){
+		initFields();
+		initOptTab();
+		initOptActions();
+	}
+	
+	function initFields(){
+		$('.tab-content input').attr('readonly', true);
+		$('.tab-content textarea').attr('readonly', true);
+		$('.tab-content select').attr('disabled', true);
+	}
+	
+	function initOptTab(){
+		$('#optTab a:first').tab('show');
+	}
+	
+	function initOptActions(){
+		$('#optAccept').click(function(){
+			handleOptActionClick('accept');
+		});
+		$('#optReject').click(function(){
+			handleOptActionClick('reject');
+		});
+	}
+	
+	function handleOptActionClick(which){
+		actionBtnToLoading(which);
+		var startNoty=noty({text: 'Submitting Your Decision to Server ...', type:'alert'});
+					
+		//TODO ajax request to server, below is test code
+		setTimeout(function(){
+			startNoty.close();
+		
+			var succ=true;		//TODO switch between true/false to test
+			if(succ){
+				noty({text: 'Successfully Submitted Your Decision!', type:'success'});
+				actionBtnToComplete(which);
+			}else{
+				noty({text: 'Failed to Submit Your Decision. You May Retry Later.', type:'error'});
+				actionBtnToReady();
+			}
+		}, 2000);
+		
+	}
+	
+	function actionBtnToLoading(which){
+		if(which=="accept"){
+			$('#optAccept').button("loading");
+		}else if(which=="reject"){
+			$('#optReject').button("loading");
+		}else{
+			throw "This statement should never be reached!"
+		}
+		
+		$('#optAccept').attr('disabled', 'true');
+		$('#optReject').attr('disabled', 'true');
+		
+		$('#optActionLoadingIcon').show();
+	}
+	
+	function actionBtnToReady(){
+		$('#optAccept').button('reset');
+		$('#optReject').button('reset');
+		
+		$('#optReject').removeAttr('disabled');
+		$('#optAccept').removeAttr('disabled');
+		
+		$('#optActionLoadingIcon').hide();
+	}
+	
+	function actionBtnToComplete(which){
+		$('#optAccept').attr('disabled', 'true');
+		$('#optReject').attr('disabled', 'true');
+		$('#optActionLoadingIcon').hide();
+	
+		if(which=="accept"){
+			$('#optAccept').text("Completed");
+		}else if(which=="reject"){
+			$('#optReject').text("Complete");
+		}else{
+			throw "This statement should never be reached!"
+		}
+	}
+	
+	</script>
