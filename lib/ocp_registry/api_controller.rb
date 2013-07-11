@@ -38,6 +38,10 @@ module Ocp::Registry
   		do_response(data, :list)
   	end
 
+    get '/' do
+      redirect to('/v1/applications/default')
+    end
+
     # check project name 
     post '/v1/applications/check' do
       if project = params[:project] 
@@ -96,7 +100,7 @@ module Ocp::Registry
     private
 
     def do_response(data, view = nil)
-      if request.accept? 'application/json' || view.nil?
+      if (request.accept? 'application/json') || view.nil?
         json(data)
       else
         erb :base do 
