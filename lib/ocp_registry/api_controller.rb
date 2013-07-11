@@ -7,21 +7,22 @@ module Ocp::Registry
 
   	not_found do
       exception = request.env["sinatra.error"]
+      @logger.debug(request.path_info)
       @logger.error(exception.message)
-      do_response({:status => "not_found"})
+      do_response({:status => "not_found"}, nil)
     end
 
     error do
       exception = request.env["sinatra.error"]
       @logger.error(exception)
       status(500)
-      do_response({:status => "error"})
+      do_response({:status => "error"}, nil)
     end
 
     error Ocp::Registry::Error do
       error = request.env["sinatra.error"]
       status(error.code)
-      do_response({:status => "error", :message => error.message})
+      do_response({:status => "error", :message => error.message},nil)
     end
 
   	# get application list
@@ -35,7 +36,11 @@ module Ocp::Registry
       result.each do |app|
         data << app.to_hash
       end
-  		do_response(data, :list)
+      if email
+  		  do_response(data, :list)
+      else
+        do_response(data, :list, :review => true)
+      end
   	end
 
     get '/' do
@@ -46,36 +51,44 @@ module Ocp::Registry
     post '/v1/applications/check' do
       if project = params[:project] 
         result = @application_manager.existed_tenant?(project)
-        do_response(!result)
+        do_response(!result, nil)
       end
     end
 
   	# get an application detail
   	get '/v1/applications/:id' do
       if(params[:id] == "default")
-        do_response(@application_manager.default, :show)
+        do_response(@application_manager.default, :apply)
       else
     		application = @application_manager.show(params[:id])
-    		do_response(application.to_hash, :show)
+        if("true" == params[:review])
+          protected!
+    		  do_response(application.to_hash, :review)
+        else
+          do_response(application.to_hash, :view)
+        end
       end
   	end
 
   	# create an application
   	post '/v1/applications' do
       app_info = Yajl.load(request.body.read)
+      puts app_info
       if app_info.kind_of?(Hash) && app_info['settings'].kind_of?(Hash)
-        app_info[:settings] = json(app_info['settings']) 
+        default = Yajl::load(@application_manager.default[:settings])
+        settings = default.merge(app_info['settings'])
+        app_info[:settings] = json(settings) 
       end
   		application = @application_manager.create(app_info)
       app_info = application.to_hash
-  		do_response(app_info, :create)
+  		do_response(app_info, nil)
   	end
 
   	# approve an application
   	post '/v1/applications/:id/approve' do
   	  protected!
   	  result = @application_manager.approve(params[:id])
-      do_response(result.to_hash, :approve)
+      do_response(result.to_hash, nil)
   	end
 
   	# refuse an application
@@ -85,7 +98,7 @@ module Ocp::Registry
       comments = nil
       comments = body['comments'] if body && body['comments']
       result = @application_manager.refuse(params[:id], comments)
-      do_response(result.to_hash, :refuse)
+      do_response(result.to_hash, nil)
   	end
 
 
@@ -99,12 +112,12 @@ module Ocp::Registry
 
     private
 
-    def do_response(data, view = nil)
-      if (request.accept? 'application/json') || view.nil?
+    def do_response(data, view = nil, mark = nil)
+      if request.accept?('application/json') || view.nil? || (data.is_a?(Hash)&&'error' == data[:status])
         json(data)
       else
         erb :base do 
-          erb view ,:locals => {:data => data}
+          erb view ,:locals => {:data => data ,:mark => mark}
         end
       end
 
