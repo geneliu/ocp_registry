@@ -54,10 +54,10 @@ module Ocp::Registry
 				if user.nil?
 					password = Ocp::Registry::Common.gen_password
 					user = @cloud_manager.create_user(username, tenant.id, password, app_info.email)
-					@logger.info("User [#{user.name}] - [#{user.id}] has been created with detailed json - #{tenant.to_json}")
+					@logger.info("User [#{user.name}] - [#{user.id}] has been created with detailed json - #{user.to_json}")
 				else
 					password = "<your-password-in-other-project>"
-					@logger.info("Using existed User [#{user.name}] - [#{user.id}] with detailed json - #{tenant.to_json}")
+					@logger.info("Using existed User [#{user.name}] - [#{user.id}] with detailed json - #{user.to_json}")
 				end
 
 				role = @cloud_manager.default_role
@@ -70,7 +70,7 @@ module Ocp::Registry
 
 				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(app_info.settings))
 
-				result = Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
+				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
 																									.update(:state => 'APPROVED',
 					                                                :updated_at => Time.now.utc.to_s,
 					                                                :settings => Yajl::Encoder.encode(settings) )
@@ -192,7 +192,6 @@ module Ocp::Registry
 			path = "/applications"
 			if app_id
 				path += URI::escape("/#{app_id}")
-				@logger.info(path)
 			end
 			query = URI::escape("email=#{email}") if email
 
