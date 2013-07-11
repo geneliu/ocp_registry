@@ -141,7 +141,7 @@ module Ocp::Registry
 				if @mail_manager
 					admin_msg = {
 						:app_info => result , 
-						:application_link => gen_app_uri(result.id) ,
+						:application_link => gen_app_uri("#{result.id}?review=true") ,
 						:applications_link => gen_app_uri 
 					}
 					mail = prepare_mail_properties(:request_admin, @mail_manager.admin_emails, admin_msg)
