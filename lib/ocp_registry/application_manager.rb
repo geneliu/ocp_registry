@@ -27,9 +27,9 @@ module Ocp::Registry
 
 		def default 
 			@default ||= {
-				:email => "user@domain.com" ,
-				:project => "your project name" ,
-				:description => "short description of your project" ,
+				:email => "" ,
+				:project => "" ,
+				:description => "" ,
 				:settings => Yajl::Encoder.encode(@cloud_manager.default_quota)
 			}
 		end
