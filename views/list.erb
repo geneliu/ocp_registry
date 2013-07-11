@@ -22,7 +22,9 @@
 			<td class="status_up sortable normal_column"><%=app[:state]%></td>
 			<td class="sortable normal_column"><%=app[:email]%></td>
 			<td class="normal_column">
-				<a href="/v1/applications/<%=app[:id]%>" class="btn btn-small">View</a>
+				<% link = "/v1/applications/#{app[:id]}" 
+					link += "?review=true" if mark && mark[:review] %>
+				<a href="<%=link%>" class="btn btn-small">View</a>
 			</td>
 		</tr>
 	<% end %>

@@ -1,0 +1,100 @@
+
+<div class="bordered optDialog">
+	<legend>Review Project Request</legend>
+
+	<%=erb :show, :locals => {:data=>data, :readonly=>true} %>
+	
+	<div class="optAction" id="optAction">
+		<button id="optAccept" type="button" class="btn btn-success" 
+			data-loading-text="Loading ...">
+			Accept
+		</button>
+		<button id="optReject" type="button" class="btn btn-warning" 
+			data-loading-text="Loading ...">
+			Reject
+		</button>
+		<img class="loadingIcon" id="optActionLoadingIcon" src="/images/loading.gif"  alt="" />
+		<div class="clear"></div>
+	</div>
+				
+</div>
+
+<script type="text/javascript">
+
+	$(document).ready(init);
+
+	function init(){
+		initOptActions();
+	}
+
+	function initOptActions(){
+		$('#optAccept').click(function(){
+			handleOptActionClick('accept');
+		});
+		$('#optReject').click(function(){
+			handleOptActionClick('reject');
+		});
+	}
+
+	function handleOptActionClick(which){
+		actionBtnToLoading(which);
+		var startNoty=noty({text: 'Submitting Your Decision to Server ...', type:'alert'});
+		
+		var url='/v1/applications/'+'<%=data[:id]%>'+'/'+((which=="accept")?"approve":"refuse");
+		$.post(url, null, 'json').done(function(data){
+			data = $.evalJSON(data); 
+			if(data.status&&data.status=='error'){
+				//server returned error
+				noty({text: 'Failed to Submit Your Decision: '+(data.message?data.message:'Unknown Error'), type:'error'});
+				actionBtnToReady();
+			}else{
+				noty({text: 'Successfully Submitted Your Decision!', type:'success'});
+				actionBtnToComplete(which);
+			}
+		}).fail(function(){
+			noty({text: 'Failed to Submit Your Decision: Connection Error. You May Retry Later.', type:'error'});
+			submitBtnToReady();
+		});
+		
+	}
+
+	function actionBtnToLoading(which){
+		if(which=="accept"){
+			$('#optAccept').button("loading");
+		}else if(which=="reject"){
+			$('#optReject').button("loading");
+		}else{
+			throw "This statement should never be reached!"
+		}
+		
+		$('#optAccept').attr('disabled', 'true');
+		$('#optReject').attr('disabled', 'true');
+		
+		$('#optActionLoadingIcon').show();
+	}
+
+	function actionBtnToReady(){
+		$('#optAccept').button('reset');
+		$('#optReject').button('reset');
+		
+		$('#optReject').removeAttr('disabled');
+		$('#optAccept').removeAttr('disabled');
+		
+		$('#optActionLoadingIcon').hide();
+	}
+
+	function actionBtnToComplete(which){
+		$('#optAccept').attr('disabled', 'true');
+		$('#optReject').attr('disabled', 'true');
+		$('#optActionLoadingIcon').hide();
+
+		if(which=="accept"){
+			$('#optAccept').text("Completed");
+		}else if(which=="reject"){
+			$('#optReject').text("Complete");
+		}else{
+			throw "This statement should never be reached!"
+		}
+	}
+
+</script>

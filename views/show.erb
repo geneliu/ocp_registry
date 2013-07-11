@@ -1,7 +1,5 @@
 <%
-	#Prepare the pass-in parameters here
-	settings=Yajl::load(data[:settings]);
-	puts settings
+	settings=Yajl::load(data[:settings])
 %>
 
 		<div class="tenantOpt">
@@ -12,56 +10,62 @@
 			
 			<div class="tab-content">
 				<div class="tab-pane" id="tenantInfo">
-					<label>Tenant Name</label>
-					<input type="text" value="<%=data[:project]%>" placeholder="Put the project name here.">
+					<label>Project Name</label>
+					<input type="text" name="project" value="<%=data[:project]%>" placeholder="Put the project name here.">
 					
 					<label>Description</label>
-					<input type="text" value="<%=data[:description]%>" placeholder="Put the project description here.">
+					<input type="text" name="description" value="<%=data[:description]%>" placeholder="Put the project description here.">
 					
 					<label>Email</label>
-					<input type="text" value="<%=data[:email]%>" placeholder="Put your valid email address here.">
+					<input type="text" name="email" value="<%=data[:email]%>" placeholder="Put your valid email address here.">
 				</div>
 				<div class="tab-pane" id="quota">
 					<label>Metadata Items</label>
-					<input type="text" value="<%=settings["metadata_items"]%>">
+					<input type="text" name="metadata_items" value="<%=settings["metadata_items"]%>">
 					
 					<label>VCPUs</label>
-					<input type="text" value="<%=settings["cores"]%>">
+					<input type="text" name="cores" value="<%=settings["cores"]%>">
 					
 					<label>Instances</label>
-					<input type="text" value="<%=settings["instances"]%>">
+					<input type="text" name="instances" value="<%=settings["instances"]%>">
 					
 					<label>Injected Files</label>
-					<input type="text" value="<%=settings["injected_files"]%>">
+					<input type="text" name="injected_files" value="<%=settings["injected_files"]%>">
 					
 					<label>Injected Files Content Bytes</label>
-					<input type="text" value="<%=settings["injected_file_content_bytes"]%>">
+					<input type="text" name="injected_file_content_bytes" value="<%=settings["injected_file_content_bytes"]%>">
 					
 					<label>Volumes</label>
-					<input type="text" value="<%=settings["volumes"]%>">
+					<input type="text" name="volumes" value="<%=settings["volumes"]%>">
 					
 					<label>Gigabytes</label>
-					<input type="text" value="<%=settings["gigabytes"]%>">
+					<input type="text" name="gigabytes" value="<%=settings["gigabytes"]%>">
 					
 					<label>RAM(MB)</label>
-					<input type="text" value="<%=settings["ram"]%>">
+					<input type="text" name="ram" value="<%=settings["ram"]%>">
 					
 					<label>Floating IPs</label>
-					<input type="text" value="<%=settings["floating_ips"]%>">
+					<input type="text" name="floating_ips" value="<%=settings["floating_ips"]%>">
 					
 					<label>Fixed IPs</label>
-					<input type="text" value="<%=settings["fixed_ips"]%>">
+					<input type="text" name="fixed_ips" value="<%=settings["fixed_ips"]%>">
 					
 					<label>Security Groups</label>
-					<input type="text" value="<%=settings["security_groups"]%>">
+					<input type="text" name="security_groups" value="<%=settings["security_groups"]%>">
 					
 					<label>Security Group Rules</label>
-					<input type="text" value="<%=settings["security_group_rules"]%>">
+					<input type="text" name="security_group_rules" value="<%=settings["security_group_rules"]%>">
 				</div>
 			</div>
 			
 			<div class="optExplaination" id="optExplaination">
-					
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
+					this is the explaination!
 			</div>
 			
 			<div class="clear"></div>
@@ -80,7 +84,7 @@
 	}
 	
 	function initFields(){
-		var readonly = 0;
+		var readonly=<%= readonly==true ? 1:0%>;
 		if(readonly){
 			$('.tab-content input').attr('readonly', true);
 			$('.tab-content textarea').attr('readonly', true);
