@@ -8,13 +8,13 @@ Dear User from <%= info[:app_info].email %> :
 
 	Your login info is as below:
 
-		login url: <a href="<%= info[:login] %>"><%= info[:login] %></a>
+		login url: <%= info[:login] %>
 		username: <%= info[:username] %>
 		password: <%= info[:password] %>
 
 	Please reset your password once your login into system.
 	
-	You can browse all your applications from <a href="<%= info[:applications_link]%>"><%= info[:applications_link]%></a>
+	You can browse all your applications from <%= info[:applications_link]%>
 
 	Thanks!
 	OCP registry
