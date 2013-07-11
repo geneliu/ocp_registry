@@ -39,7 +39,8 @@ module Ocp::Registry
       def default_compute_quota
       	{
           "injected_file_content_bytes"=>10240, 
-          "metadata_items"=>128, "ram"=>51200, 
+          "metadata_items"=>128, 
+          "ram"=>51200, 
           "floating_ips"=>10, 
           "key_pairs"=>100, 
           "id"=>"defaults", 
