@@ -28,6 +28,16 @@ module Ocp::Registry::Common
   		Marshal.load(Marshal.dump(o))
 		end
 
+		def json_merge(a,b,reverse = false)
+			hash_a = Yajl::load a 
+			hash_b = Yajl::load b
+			if reverse
+				b.merge a
+			else
+				a.merge b
+			end
+		end
+
 		private 
 
 		def do_hash_filter(hash, fields = [])
