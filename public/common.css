@@ -56,11 +56,19 @@ input, textarea, .uneditable-input {
 	margin-top: 10px;
 }
 
-.optDialog button, .optDialog img {
+.toLeft{
+	float: left;
+}
+
+.toRight{
 	float: right;
 }
-.optDialog button {
+
+.optDialog button{
 	width: 100px;
+}
+
+.optDialog button.toRight {
 	margin-left: 10px;
 }
 
@@ -68,3 +76,29 @@ input, textarea, .uneditable-input {
 	margin-left: 10px;
 	display: none;
 }
+
+.rejectCommentDialog {
+	width: 400px;
+}
+
+.rejectCommentDialog textarea {
+	width: 360px;
+	height: 200px;
+	resize: none;
+	margin-left: 12px;
+}
+
+.rejectCommentDialog .rejectCommentAction {
+	border-top: 1px solid #ddd;
+	padding: 15px 10px 5px 10px;
+	margin-top: 10px;
+}
+
+.rejectCommentDialog button{
+	width: 100px;
+}
+
+.rejectCommentDialog button.toRight {
+	margin-left: 10px;
+}
+

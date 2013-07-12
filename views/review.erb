@@ -5,18 +5,31 @@
 	<%=erb :show, :locals => {:data=>data, :readonly=>true} %>
 	
 	<div class="optAction" id="optAction">
-		<button id="optAccept" type="button" class="btn btn-success" 
+		<button id="optAccept" type="button" class="btn btn-success toRight" 
 			data-loading-text="Loading ...">
 			Accept
 		</button>
-		<button id="optReject" type="button" class="btn btn-warning" 
+		<button id="optReject" type="button" class="btn btn-warning toRight" 
 			data-loading-text="Loading ...">
 			Reject
 		</button>
-		<img class="loadingIcon" id="optActionLoadingIcon" src="/images/loading.gif"  alt="" />
+		<img class="loadingIcon toRight" id="optActionLoadingIcon" src="/images/loading.gif"  alt="" />
+		<button id="optBack" type="button" class="btn toRight">Back</button>
 		<div class="clear"></div>
 	</div>
 				
+</div>
+
+<div id="rejectCommentDialog" class="bordered rejectCommentDialog modal hide" tabindex="-1" role="dialog" aria-labelledby="Rejection Comment" aria-hidden="true">
+	<legend>Comment</legend>
+
+	<textarea name="rejectCommentText" placeholder="Put your comment for rejection here ..."></textarea>
+
+	<div class="rejectCommentAction">
+		<button id="rejectCommentConfirm" type="button" class="btn btn-primary toRight">Confirm</button>
+		<button id="rejectCommentBack" type="button" class="btn toRight">Back</button>
+		<div class="clear"></div>
+	</div>
 </div>
 
 <script type="text/javascript">
@@ -25,24 +38,50 @@
 
 	function init(){
 		initOptActions();
+		initRejectCommentDialogActions();
 	}
 
 	function initOptActions(){
+		$('#optBack').hide();
+		$('#optBack').click(function(){
+			window.location='/v1/applications';
+		});
+
 		$('#optAccept').click(function(){
-			handleOptActionClick('accept');
+			$.noty.closeAll();
+			handleActionClick('accept', null);
 		});
 		$('#optReject').click(function(){
-			handleOptActionClick('reject');
+			$.noty.closeAll();
+			$('#rejectCommentDialog').modal();
 		});
 	}
 
-	function handleOptActionClick(which){
+	function initRejectCommentDialogActions(){
+
+		$('#rejectCommentBack').click(function(){
+			$('#rejectCommentDialog').modal('hide');
+		});
+
+		$('#rejectCommentConfirm').click(function(){
+			$('#rejectCommentDialog').modal('hide');
+
+			var data={
+				comments: $('textarea[name=rejectCommentText]').val()
+			};
+			data=$.toJSON( data );
+
+			handleActionClick('reject', data);			
+			
+		});
+
+	}
+
+	function handleActionClick(which, dataToSend){
 		actionBtnToLoading(which);
-		var startNoty=noty({text: 'Submitting Your Decision to Server ...', type:'alert'});
-		
 		var url='/v1/applications/'+'<%=data[:id]%>'+'/'+((which=="accept")?"approve":"refuse");
-		$.post(url, null, 'json').done(function(data){
-			data = $.evalJSON(data); 
+		$.post(url, dataToSend, 'json').done(function(data){
+			data = $.evalJSON(data);
 			if(data.status&&data.status=='error'){
 				//server returned error
 				noty({text: 'Failed to Submit Your Decision: '+(data.message?data.message:'Unknown Error'), type:'error'});
@@ -53,7 +92,7 @@
 			}
 		}).fail(function(){
 			noty({text: 'Failed to Submit Your Decision: Connection Error. You May Retry Later.', type:'error'});
-			submitBtnToReady();
+			actionBtnToReady();
 		});
 		
 	}
@@ -95,6 +134,8 @@
 		}else{
 			throw "This statement should never be reached!"
 		}
+
+		$('#optBack').show();
 	}
 
 </script>

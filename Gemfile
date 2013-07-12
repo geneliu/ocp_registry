@@ -5,6 +5,7 @@ gem "thin"
 gem "sequel"
 gem "fog"
 gem "tlsmail"
+gem "yajl-ruby"
 
 group :db do
   gem "mysql2"

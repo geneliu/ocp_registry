@@ -5,11 +5,11 @@
 	<%=erb :show, :locals => {:data=>data, :readonly=>false} %>
 	
 	<div class="optAction" id="optAction">
-		<button id="optSubmit" type="button" class="btn btn-primary" 
+		<button id="optSubmit" type="button" class="btn btn-primary toRight" 
 			data-loading-text="Loading ..." 
 			data-complete-text="Completed!">
 			Submit</button>
-		<img class="loadingIcon" id="optActionLoadingIcon" src="/images/loading.gif"  alt="" />
+		<img class="loadingIcon toRight" id="optActionLoadingIcon" src="/images/loading.gif"  alt="" />
 		<div class="clear"></div>
 	</div>
 				
@@ -28,20 +28,36 @@
 	
 	function initOptSubmit(){
 		$('#optSubmit').click(function(){
-			
+			$.noty.closeAll();
+
+			//check the data corrections
+			var ret=checkTenantFields();
+			if(!ret.ret){
+				var fieldNamesStr="";
+				$.each(ret.fields, function(i, v){
+					if(i>=ret.fields.length-1){
+						fieldNamesStr+=v;
+					}else{
+						fieldNamesStr+=v+" and ";
+					}
+				});
+
+				noty({text: "Field "+fieldNamesStr+" "+((ret.fields.length>1)?"are":"is")+" invalid.", type: 'error'});
+				return;
+			}
+
+			//do the submission
 			submitBtnToLoading();
-			var startNoty=noty({text: 'Submitting Tenant Request to Server ...', type:'alert'});
-						
 			var data=generateTenantRequest();
 
 			$.post('/v1/applications', data, 'json').done(function(data){
-				data = $.evalJSON(data); 
+				data = $.evalJSON(data);
 				if(data.status&&data.status=='error'){
 					//server returned error
 					noty({text: 'Failed to Submit Your Request: '+(data.message?data.message:'Unknown Error'), type:'error'});
 					submitBtnToReady();
 				}else{
-					noty({text: 'Successfully Submitted Your Request!', type:'success'});
+					noty({text: 'Successfully Submitted Your Request! You Can Close This Window Now.', type:'success'});
 					submitBtnToComplete();
 				}
 			}).fail(function(){
@@ -69,6 +85,24 @@
 		$('#optSubmit').text("Completed");
 		$('#optSubmit').attr('disabled', 'true');
 		$('#optActionLoadingIcon').hide();
+	}
+
+	function checkTenantFields(){
+		var project=$('#tenantInfo input[name=project]').val();
+		var email=$('#tenantInfo input[name=email]').val();
+
+		var result={ret:true, fields:[]};
+
+		if(!project||project.length<=0){
+			result.ret=false;
+			result.fields.push("project");
+		}
+		if(!email||email.length<=0){
+			result.ret=false;
+			result.fields.push("email");
+		}
+
+		return result;
 	}
 	
 	function generateTenantRequest(){
