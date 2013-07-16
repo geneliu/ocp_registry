@@ -65,7 +65,7 @@ module Ocp::Registry
           protected!
     		  do_response(application.to_hash(:lazy_load => false), :review)
         else
-          do_response(application.to_hash(:lazy_load => false), :view)
+          do_response(application.to_hash(:lazy_load => false, :limit => 2), :view)
         end
       end
   	end
@@ -99,7 +99,6 @@ module Ocp::Registry
       result = @application_manager.refuse(params[:id], comments)
       do_response(result.to_hash, nil)
   	end
-
 
   	def initialize
       super

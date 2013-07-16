@@ -11,10 +11,13 @@ module Ocp::Registry::Models
 
   	def to_hash(opts = {})
   		hash = self.values
-  		if false == opts[:lazy_load] && self.registry_settings
+  		if false == opts[:lazy_load]
   			settings = []
-  			self.registry_settings_dataset.reverse(:version).each do |set|
-  				settings << set.to_hash
+  			self.registry_settings do |data|
+          data = data.limit(limit) if limit = opts[:limit]
+          data.reverse(:version).each do |set|
+    				settings << set.to_hash
+          end
   			end
   			hash[:registry_settings] = settings
   		end
