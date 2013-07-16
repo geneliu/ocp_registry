@@ -6,7 +6,7 @@ Dear User from <%= info[:app_info].email %> :
 	Your resource request for project [<%= info[:app_info].project %>] has been REFUSED at [<%= info[:app_info].created_at %>].
 	Your application id is [<%= info[:app_info].id%>].
 	The comment is :
-		<%= info[:app_info].comments %>
+		<%= info[:comments] %>
 	
 	You can browse your application from <%= info[:application_link]%>.
 	You can browse all your applications from <%= info[:applications_link]%>

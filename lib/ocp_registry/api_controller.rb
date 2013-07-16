@@ -63,9 +63,9 @@ module Ocp::Registry
     		application = @application_manager.show(params[:id])
         if("true" == params[:review])
           protected!
-    		  do_response(application.to_hash, :review)
+    		  do_response(application.to_hash(:lazy_load => false), :review)
         else
-          do_response(application.to_hash, :view)
+          do_response(application.to_hash(:lazy_load => false), :view)
         end
       end
   	end
@@ -73,11 +73,10 @@ module Ocp::Registry
   	# create an application
   	post '/v1/applications' do
       app_info = Yajl.load(request.body.read)
-      puts app_info
       if app_info.kind_of?(Hash) && app_info['settings'].kind_of?(Hash)
         default = Yajl::load(@application_manager.default[:settings])
         settings = default.merge(app_info['settings'])
-        app_info[:settings] = json(settings) 
+        app_info["settings"] = json(settings)
       end
   		application = @application_manager.create(app_info)
       app_info = application.to_hash

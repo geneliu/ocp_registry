@@ -9,13 +9,12 @@ module Ocp::Registry
 			@logger = Ocp::Registry.logger
 		end
 
-		def list(email=nil)
+		def list(email = nil)
 			if email
 				results = Ocp::Registry::Models::RegistryApplication.reverse_order(:created_at).where(:email => email)
 			else
 				results = Ocp::Registry::Models::RegistryApplication.reverse_order(:created_at).all
 			end
-		
 			results
 		end
 
@@ -68,12 +67,14 @@ module Ocp::Registry
 
 				#assign quota to project
 
-				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(app_info.settings))
+				current_setting = app_info.registry_settings_dataset.order_by(:version).last
+				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(current_setting.settings))
 
 				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
-																									.update(:state => 'APPROVED',
-					                                                :updated_at => Time.now.utc.to_s,
-					                                                :settings => Yajl::Encoder.encode(settings) )
+																									.update(:state => 'APPROVED')
+				current_setting.updated_at = Time.now.utc.to_s
+				current_setting.save_changes
+
 				app_info = get_application(app_id)
 				if @mail_manager
 					admin_msg = {
@@ -108,15 +109,21 @@ module Ocp::Registry
 			return {:status => "error", :message => "Application [#{app_info.project}] - #{app_id} has been #{app_info.state}"} unless app_info.state == 'PENDING'
 
 			comments ||= "no comments"
-			Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
-																								.update(:state => 'REFUSED',
-																												:updated_at => Time.now.utc.to_s,
-																												:comments => comments)
+
+			app_info.state = 'REFUSED' 
+			current_setting = app_info.registry_settings_dataset.order_by(:version).last
+			current_setting.updated_at = Time.now.utc.to_s
+			current_setting.comments = comments
+
+			current_setting.save_changes
+			app_info.save_changes
+
 			app_info = get_application(app_id)
 
 			if @mail_manager
 				admin_msg = {
 					:app_info => app_info , 
+					:comments => comments ,
 					:application_link => gen_app_uri(app_id) ,
 					:applications_link => gen_app_uri 
 				}
@@ -124,6 +131,7 @@ module Ocp::Registry
 				@mail_manager.send_mail(mail)
 				user_msg = {
 					:app_info => app_info , 
+					:comments => comments ,
 					:application_link => gen_app_uri(app_id) ,
 					:applications_link => gen_app_uri(nil, app_info.email) 
 				}
@@ -137,7 +145,9 @@ module Ocp::Registry
 			if existed_tenant?(app_info['project'])
 				{:status => "error", :message => "Project name [#{app_info['project']}] has been used"}
 			else
+				setting = app_info.delete("settings")
 		 		result = Ocp::Registry::Models::RegistryApplication.create(app_info)
+		 		result.add_registry_setting(:settings =>setting)
 				if @mail_manager
 					admin_msg = {
 						:app_info => result , 
