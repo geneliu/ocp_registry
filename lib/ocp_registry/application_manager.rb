@@ -25,12 +25,22 @@ module Ocp::Registry
 		end
 
 		def default 
-			@default ||= {
+			return @default if @default
+
+			settings = Yajl::Encoder.encode(@cloud_manager.default_quota)
+			default_setting = {
+				:settings => settings
+			}
+			registry_settings = [] << default_setting
+
+
+			@default = {
 				:email => "" ,
 				:project => "" ,
 				:description => "" ,
-				:settings => Yajl::Encoder.encode(@cloud_manager.default_quota)
+				:registry_settings => registry_settings
 			}
+
 		end
 
 		def approve(app_id)

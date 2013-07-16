@@ -74,7 +74,7 @@ module Ocp::Registry
   	post '/v1/applications' do
       app_info = Yajl.load(request.body.read)
       if app_info.kind_of?(Hash) && app_info['settings'].kind_of?(Hash)
-        default = Yajl::load(@application_manager.default[:settings])
+        default = Yajl::load(@application_manager.default[:registry_settings].first[:settings])
         settings = default.merge(app_info['settings'])
         app_info["settings"] = json(settings)
       end

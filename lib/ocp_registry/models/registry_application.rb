@@ -13,7 +13,7 @@ module Ocp::Registry::Models
   		hash = self.values
   		if false == opts[:lazy_load] && self.registry_settings
   			settings = []
-  			self.registry_settings.each do |set|
+  			self.registry_settings_dataset.reverse(:version).each do |set|
   				settings << set.to_hash
   			end
   			hash[:registry_settings] = settings
