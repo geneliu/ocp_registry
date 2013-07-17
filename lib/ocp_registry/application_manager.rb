@@ -21,7 +21,7 @@ module Ocp::Registry
 		def cancel(app_id)
 			app_info = get_application(app_id)
 			return {:status => "error", :message => "Application [#{app_info.project}] - [#{app_id}] has been #{app_info.state}"} unless app_info.state == 'PENDING'
-			Ocp::Registry::Models::RegistryApplication.where(:id => app_id).update(:state => 'CANCELED')
+			Ocp::Registry::Models::RegistryApplication.where(:id => app_id).update(:state => 'CANCELED', :end_at => Time.now.utc.to_s)
 			app_info = get_application(app_id)
 			if @mail_manager
 				admin_msg = {
