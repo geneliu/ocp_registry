@@ -29,16 +29,15 @@ module Ocp::Registry
   	get '/v1/applications' do
       email = params[:email]
       protected! unless email
-      data = []
-
-  		result = @application_manager.list(email)
-
-      result.each do |app|
-        data << app.to_hash
-      end
       if email
-  		  do_response(data, :list)
+        data = {:status => "error", :message => "Sorry, list all applications of a specific user is not supported since security risks"}
+  		  do_response(data)
       else
+        data = []
+        result = @application_manager.list
+        result.each do |app|
+          data << app.to_hash
+        end
         do_response(data, :list, :review => true)
       end
   	end
