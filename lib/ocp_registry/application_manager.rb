@@ -89,7 +89,7 @@ module Ocp::Registry
 				if @mail_manager
 					admin_msg = {
 						:app_info => app_info , 
-						:application_link => gen_app_uri(app_id) ,
+						:application_link => gen_app_uri(app_id, :review => true) ,
 						:applications_link => gen_app_uri
 					}
 					mail = prepare_mail_properties(:approve_admin, @mail_manager.admin_emails, admin_msg)
@@ -97,7 +97,7 @@ module Ocp::Registry
 					user_msg = {
 						:app_info => app_info ,
 						:application_link => gen_app_uri(app_id) ,
-						:applications_link => gen_app_uri(nil, app_info.email) ,
+						:applications_link => gen_app_uri(nil, :email => app_info.email) ,
 						:login => Ocp::Registry.cloud_login_url ,
 						:username => username ,
 						:password => password
@@ -134,8 +134,8 @@ module Ocp::Registry
 				admin_msg = {
 					:app_info => app_info , 
 					:comments => comments ,
-					:application_link => gen_app_uri(app_id) ,
-					:applications_link => gen_app_uri 
+					:application_link => gen_app_uri(app_id, :review => true) ,
+					:applications_link => gen_app_uri
 				}
 				mail = prepare_mail_properties(:refuse_admin, @mail_manager.admin_emails, admin_msg)
 				@mail_manager.send_mail(mail)
@@ -143,7 +143,7 @@ module Ocp::Registry
 					:app_info => app_info , 
 					:comments => comments ,
 					:application_link => gen_app_uri(app_id) ,
-					:applications_link => gen_app_uri(nil, app_info.email) 
+					:applications_link => gen_app_uri(nil, :email => app_info.email) 
 				}
 				mail = prepare_mail_properties(:refuse_user, app_info.email, user_msg)
 				@mail_manager.send_mail(mail)
@@ -161,7 +161,7 @@ module Ocp::Registry
 				if @mail_manager
 					admin_msg = {
 						:app_info => result , 
-						:application_link => gen_app_uri("#{result.id}?review=true") ,
+						:application_link => gen_app_uri(result.id, :review => true) ,
 						:applications_link => gen_app_uri 
 					}
 					mail = prepare_mail_properties(:request_admin, @mail_manager.admin_emails, admin_msg)
@@ -169,7 +169,7 @@ module Ocp::Registry
 					user_msg = {
 						:app_info => result ,
 						:application_link => gen_app_uri(result.id) ,
-						:applications_link => gen_app_uri(nil, result.email) 
+						:applications_link => gen_app_uri(nil, :email => result.email) 
 					}
 					mail = prepare_mail_properties(:request_user, result.email, user_msg)
 					@mail_manager.send_mail(mail)
@@ -206,14 +206,24 @@ module Ocp::Registry
 			}
 		end
 
-		def gen_app_uri(app_id = nil, email = nil)
+		def gen_app_uri(app_id = nil, querys = nil)
 			host = URI::escape(Ocp::Registry.base_url)
 			port = Ocp::Registry.http_port
-			path = "/applications"
+			path = "/v1/applications"
 			if app_id
 				path += URI::escape("/#{app_id}")
 			end
-			query = URI::escape("email=#{email}") if email
+			query = nil
+			if(querys && querys.is_a?(Hash))
+				querys.each do |key, value|
+					if query.nil?
+						query = "#{key.to_s}=#{value}"
+					else
+						query += "&" 
+						query += "#{key.to_s}=#{value}"
+					end
+				end
+			end
 
 			uri = URI::HTTP.build(:host => host, :port => port, :path => path, :query => query).to_s
 		end
