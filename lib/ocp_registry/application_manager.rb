@@ -18,9 +18,99 @@ module Ocp::Registry
 			results
 		end
 
+		def cancel(app_id)
+			Ocp::Registry::Models::RegistryApplication.where(:id => app_id).update(:state => 'CANCELED')
+			app_info = get_application(app_id)
+			if @mail_manager
+				admin_msg = {
+					:app_info => app_info
+				}
+				mail = prepare_mail_properties(:cancel_admin, @mail_manager.admin_emails, admin_msg)
+				@mail_manager.send_mail(mail)
+				user_msg = {
+					:app_info => app_info
+				}
+				mail = prepare_mail_properties(:cancel_user, app_info.email, user_msg)
+				@mail_manager.send_mail(mail)
+			end
+			app_info
+		end
+
+		def list_settings(app_id)
+			Ocp::Registry::Models::RegistrySetting.reverse_order(:version).where(:registry_application_id => app_id)
+		end
+
 		def show(app_id)
 			app_info = get_application(app_id)
 			return {:status => "error", :message => "Application with id - [#{app_id}] is not existed"} if app_info.nil?
+			app_info
+		end
+
+		def add_setting_for(app_id, setting)
+			app_info = get_application(app_id)
+			last_setting = Ocp::Registry::Models::RegistrySetting.where(:registry_application_id => app_id).order_by(:version).last
+																													 
+			if last_setting.from == setting["from"]
+				wait_for = setting["from"] == "ADMIN" ?  app_info.email : "Administrator"
+				return {:status => "error", :message => "Please wait for #{wait_for} review your last updates at #{last_setting.updated_at}"}
+			end
+			change_set = []
+			if setting["settings"]
+				src = Yajl::load(last_setting.settings)
+				dest = setting["settings"]
+				
+				merged = src.merge(dest) do |key, v1, v2|
+					if v1 != v2 
+						change = {
+							:key => key,
+							:from => v1,
+							:to => v2
+						}
+						change_set << change
+					end
+					v2
+				end
+				return {:status => "error", :message => "No changes in settings is found"} if change_set.empty?
+				set = Yajl::Encoder.encode(merged)
+			else
+				set = last_setting.settings
+			end
+			comments = setting["comments"]
+			comments ||= "no comments"
+			update_time = Time.now.utc.to_s
+			last_setting.comments = comments
+			last_setting.updated_at = update_time
+			last_setting.save_changes
+			new_setting = Ocp::Registry::Models::RegistrySetting.new(:registry_application_id => app_id,
+																														 	 :updated_at => update_time,
+																														   :settings => set,
+																														   :version => (last_setting.version + 1),
+																														   :from => setting["from"])
+			new_setting.save
+
+			if @mail_manager
+				if setting["from"] == "ADMIN"
+					link = gen_app_uri(app_id, :modified => true)
+					mail_to = app_info.email
+				else
+					link = gen_app_uri(app_id, :modified => true, :review => true)
+					mail_to = @mail_manager.admin_emails
+				end
+
+				msg = {
+					:from => setting["from"] == "ADMIN" ? "Administrator" : app_info.email ,
+					:name => setting["from"] == "ADMIN" ?  "User from #{app_info.email}" : "Administrator" ,
+					:change_set => change_set ,
+					:app_info => app_info ,
+					:comments => comments , 
+					:time => update_time ,
+					:application_link => link
+				}
+ 
+				mail = prepare_mail_properties(:modify, mail_to, msg)
+				@mail_manager.send_mail(mail)	
+			end
+
 			app_info
 		end
 
@@ -81,10 +171,7 @@ module Ocp::Registry
 				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(current_setting.settings))
 
 				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
-																									.update(:state => 'APPROVED')
-				current_setting.updated_at = Time.now.utc.to_s
-				current_setting.save_changes
-
+																									.update(:state => 'APPROVED', :end_at => Time.now.utc.to_s)
 				app_info = get_application(app_id)
 				if @mail_manager
 					admin_msg = {
@@ -120,10 +207,12 @@ module Ocp::Registry
 
 			comments ||= "no comments"
 
-			app_info.state = 'REFUSED' 
+			app_info.state = 'REFUSED'
+			app_info.end_at = Time.now.utc.to_s
 			current_setting = app_info.registry_settings_dataset.order_by(:version).last
-			current_setting.updated_at = Time.now.utc.to_s
-			current_setting.comments = comments
+			current_setting.updated_at = app_info.end_at
+
+			current_setting.comments = comments 
 
 			current_setting.save_changes
 			app_info.save_changes
@@ -157,7 +246,7 @@ module Ocp::Registry
 			else
 				setting = app_info.delete("settings")
 		 		result = Ocp::Registry::Models::RegistryApplication.create(app_info)
-		 		result.add_registry_setting(:settings =>setting)
+		 		result.add_registry_setting(:settings => setting)
 				if @mail_manager
 					admin_msg = {
 						:app_info => result , 
@@ -185,11 +274,7 @@ module Ocp::Registry
 				return true if local_existed
 			end
 		  remote_existed = @cloud_manager.get_tenant_by_name(tenant)? true : false
-		  if remote_existed
-		  	return true
-		  else
-		  	return false
-		  end
+		  return remote_existed
 		end
 
 		private 

@@ -63,10 +63,23 @@ module Ocp::Registry
     		application = @application_manager.show(params[:id])
         if("true" == params[:review])
           protected!
-    		  do_response(application.to_hash(:lazy_load => false), :review)
+          if "true" == params[:modified]
+      		  data = application.to_hash(:lazy_load => false, :limit => 2)
+            view = :admin_modify
+          else
+            data = application.to_hash(:lazy_load => false, :limit => 1)
+            view = :review
+          end
         else
-          do_response(application.to_hash(:lazy_load => false, :limit => 2), :view)
+          if "true" == params[:modified]
+            data = application.to_hash(:lazy_load => false, :limit => 2)
+            view = :user_modify
+          else
+            data = application.to_hash(:lazy_load => false, :limit => 1)
+            view = :view
+          end
         end
+        do_response(data,view)
       end
   	end
 
@@ -99,6 +112,34 @@ module Ocp::Registry
       result = @application_manager.refuse(params[:id], comments)
       do_response(result.to_hash, nil)
   	end
+
+    post '/v1/applications/:id/settings' do
+      setting = Yajl.load(request.body.read)
+      if setting["from"] && setting["from"].strip.upcase == "ADMIN"
+        protected! 
+        setting["from"] = "ADMIN"
+      else
+        setting["from"] = "USER"
+      end
+      result = @application_manager.add_setting_for(params[:id],setting)
+      do_response(result.to_hash)
+    end
+
+    get '/v1/applications/:id/settings' do
+      result = @application_manager.list_settings(params[:id])
+
+      data = []
+      result.each do |setting|
+        data << setting.to_hash
+      end
+
+      do_response(data)
+    end
+
+    post '/v1/applications/:id/cancel' do
+      result = @application_manager.cancel(params[:id])
+      do_response(result.to_hash)
+    end
 
   	def initialize
       super

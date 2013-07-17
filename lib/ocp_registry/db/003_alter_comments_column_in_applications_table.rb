@@ -7,7 +7,7 @@ Sequel.migration do
 		alter_table(:registry_applications) do
 			drop_column :comments
 			drop_column :settings
-			drop_column :updated_at
+			rename_column :updated_at, :end_at
 		end
 	end
 end

@@ -14,14 +14,15 @@ module Ocp::Registry::Models
   		if false == opts[:lazy_load]
   			settings = []
   			self.registry_settings do |data|
-          data = data.limit(limit) if limit = opts[:limit]
+          limit = opts[:limit]
+          data = data.limit(limit) if limit
           data.reverse(:version).each do |set|
     				settings << set.to_hash
           end
   			end
   			hash[:registry_settings] = settings
   		end
-  		hash
+  		Ocp::Registry::Common.deep_copy(hash)
   	end
 
   end
