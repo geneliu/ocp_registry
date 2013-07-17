@@ -7,30 +7,32 @@ module Ocp::Registry
 
   	not_found do
       exception = request.env["sinatra.error"]
-      @logger.debug(request.path_info)
-      @logger.error(exception.message)
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
+      @logger.info(exception.message)
       do_response({:status => "not_found"}, nil)
     end
 
     error do
       exception = request.env["sinatra.error"]
-      @logger.error(exception)
+      @logger.info(exception)
       status(500)
       do_response({:status => "error"}, nil)
     end
 
     error Ocp::Registry::Error do
       error = request.env["sinatra.error"]
+      @logger.info(error.message)
       status(error.code)
       do_response({:status => "error", :message => error.message},nil)
     end
 
   	# get application list
   	get '/v1/applications' do
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
       email = params[:email]
       protected! unless email
       if email
-        data = {:status => "error", :message => "Sorry, list all applications of a specific user is not supported since security risks"}
+        data = {:status => "error", :message => "Sorry, list all applications of a specific user is not supported any more since security risks"}
   		  do_response(data)
       else
         data = []
@@ -48,6 +50,7 @@ module Ocp::Registry
 
     # check project name 
     post '/v1/applications/check' do
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
       if project = params[:project] 
         result = @application_manager.existed_tenant?(project)
         do_response(!result, nil)
@@ -56,6 +59,7 @@ module Ocp::Registry
 
   	# get an application detail
   	get '/v1/applications/:id' do
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
       if(params[:id] == "default")
         do_response(@application_manager.default, :apply)
       else
@@ -85,6 +89,9 @@ module Ocp::Registry
   	# create an application
   	post '/v1/applications' do
       app_info = Yajl.load(request.body.read)
+
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip} : #{app_info}")
+
       if app_info.kind_of?(Hash) && app_info['settings'].kind_of?(Hash)
         default = Yajl::load(@application_manager.default[:registry_settings].first[:settings])
         settings = default.merge(app_info['settings'])
@@ -98,12 +105,15 @@ module Ocp::Registry
   	# approve an application
   	post '/v1/applications/:id/approve' do
   	  protected!
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
   	  result = @application_manager.approve(params[:id])
       do_response(result.to_hash, nil)
   	end
 
   	# refuse an application
   	post '/v1/applications/:id/refuse' do
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
+
   	  protected!
   	  body = Yajl.load(request.body.read)
       comments = nil
@@ -114,6 +124,8 @@ module Ocp::Registry
 
     post '/v1/applications/:id/settings' do
       setting = Yajl.load(request.body.read)
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip} : #{setting}")
+
       if setting["from"] && setting["from"].strip.upcase == "ADMIN"
         protected! 
         setting["from"] = "ADMIN"
@@ -125,6 +137,8 @@ module Ocp::Registry
     end
 
     get '/v1/applications/:id/settings' do
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
+
       result = @application_manager.list_settings(params[:id])
 
       data = []
@@ -136,6 +150,8 @@ module Ocp::Registry
     end
 
     post '/v1/applications/:id/cancel' do
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
+
       result = @application_manager.cancel(params[:id])
       do_response(result.to_hash)
     end
@@ -152,8 +168,10 @@ module Ocp::Registry
 
     def do_response(data, view = nil, mark = nil)
       if request.accept?('application/json') || view.nil? || (data.is_a?(Hash)&&'error' == data[:status])
+        @logger.info("[RESPONSE] JSON : json - #{data}")
         json(data)
       else
+        @logger.info("[RESPONSE] VIEW : #{view.to_s} - #{data}")
         erb :base do 
           erb view ,:locals => {:data => data ,:mark => mark}
         end
