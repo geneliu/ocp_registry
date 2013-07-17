@@ -1,10 +1,10 @@
 From: <%= mail[:from]%>
 To: <%= mail[:to].kind_of?(Array)? mail[:to].join(";") : mail[:to]%>
-Subject: Resource request for project <%= info[:app_info].project %> has been UPDATED by <%= info[:from] %>
+Subject: UPDATED resource request for project <%= info[:app_info].project %> from <%= info[:from] %>
 
 Dear <%= info[:name] %> :
 
-	The resource request for project [<%= info[:app_info].project %>] has been UPDATED by [<%= info[:from]%>] at [<%= info[:time]%>].
+	The resource request for project [<%= info[:app_info].project %>] has been [UPDATED] by [<%= info[:from]%>] at [<%= info[:time]%>].
 	The application id is [<%= info[:app_info].id%>].
 
 	<% unless info[:change_set].empty?%>
