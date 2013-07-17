@@ -19,6 +19,8 @@ module Ocp::Registry
 		end
 
 		def cancel(app_id)
+			app_info = get_application(app_id)
+			return {:status => "error", :message => "Application [#{app_info.project}] - [#{app_id}] has been #{app_info.state}"} unless app_info.state == 'PENDING'
 			Ocp::Registry::Models::RegistryApplication.where(:id => app_id).update(:state => 'CANCELED')
 			app_info = get_application(app_id)
 			if @mail_manager
@@ -70,7 +72,7 @@ module Ocp::Registry
 					end
 					v2
 				end
-				return {:status => "error", :message => "No changes in settings is found"} if change_set.empty?
+				return {:status => "error", :message => "No changes in settings are found"} if change_set.empty?
 				set = Yajl::Encoder.encode(merged)
 			else
 				set = last_setting.settings
