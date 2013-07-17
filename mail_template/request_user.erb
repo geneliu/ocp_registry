@@ -3,10 +3,10 @@ To: <%= mail[:to].kind_of?(Array)? mail[:to].join(";") : mail[:to]%>
 Subject: Received resource request for project <%= info[:app_info].project %>
 
 Dear User from <%= info[:app_info].email %> :
+
 	Your resource request for project [<%= info[:app_info].project %>] has been RECEIVED at [<%= info[:app_info].created_at %>].
 	Your application id is [<%= info[:app_info].id%>].
 	You can browse your application from <%= info[:application_link]%>.
-	You can also have a quick browse all your applications from <%= info[:applications_link]%>.
 	We will process your application as soon as possible.
 	We will send you another email once we completed process your request.
 

@@ -186,7 +186,6 @@ module Ocp::Registry
 					user_msg = {
 						:app_info => app_info ,
 						:application_link => gen_app_uri(app_id) ,
-						:applications_link => gen_app_uri(nil, :email => app_info.email) ,
 						:login => Ocp::Registry.cloud_login_url ,
 						:username => username ,
 						:password => password
@@ -234,7 +233,6 @@ module Ocp::Registry
 					:app_info => app_info , 
 					:comments => comments ,
 					:application_link => gen_app_uri(app_id) ,
-					:applications_link => gen_app_uri(nil, :email => app_info.email) 
 				}
 				mail = prepare_mail_properties(:refuse_user, app_info.email, user_msg)
 				@mail_manager.send_mail(mail)
@@ -260,7 +258,6 @@ module Ocp::Registry
 					user_msg = {
 						:app_info => result ,
 						:application_link => gen_app_uri(result.id) ,
-						:applications_link => gen_app_uri(nil, :email => result.email) 
 					}
 					mail = prepare_mail_properties(:request_user, result.email, user_msg)
 					@mail_manager.send_mail(mail)
