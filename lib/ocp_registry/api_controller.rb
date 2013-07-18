@@ -90,6 +90,14 @@ module Ocp::Registry
   	post '/v1/applications' do
       app_info = Yajl.load(request.body.read)
 
+      check_fields = ["email","project","settings"]
+      valid, fields = validate_not_null(check_fields,app_info)
+      return do_response({:status => "error", :message => "Filed [#{fields.join(", ")}] can not be null"}) unless valid
+
+      check_fields = ["email"]
+      valid, fields = validate_email(check_fields,app_info)
+      return do_response({:status => "error", :message => "Field [#{fields.join(", ")}] is not a valid email address"}) unless valid
+
       @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip} : #{app_info}")
 
       if app_info.kind_of?(Hash) && app_info['settings'].kind_of?(Hash)
@@ -125,6 +133,8 @@ module Ocp::Registry
     post '/v1/applications/:id/settings' do
       setting = Yajl.load(request.body.read)
       @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip} : #{setting}")
+
+      setting = {} if setting.nil?
 
       if setting["from"] && setting["from"].strip.upcase == "ADMIN"
         protected! 
@@ -196,6 +206,30 @@ module Ocp::Registry
 
     def json(payload)
       Yajl::Encoder.encode(payload)
+    end
+
+    def validate_not_null(fields=[], source={})
+      validate(fields, source){|value| !value.nil? }
+    end
+
+    def validate_email(fields=[], source={})
+      validate(fields, source){|value| value =~ Ocp::Registry::Common::EMAIL_REGEX}
+    end
+
+    def validate(fields,source)
+      return true if fields.empty?
+      return false ,fields if source.empty? || !block_given?
+
+      not_pass = []
+      fields.each do |field|  
+        not_pass << field unless yield source[field]
+      end
+
+      if not_pass.empty?
+        return true, []
+      else
+        return false , not_pass
+      end
     end
 
   end

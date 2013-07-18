@@ -77,7 +77,7 @@ module Ocp::Registry
 			end
 
 			change_set = []
-			if setting["settings"]
+			if setting && setting["settings"]
 				src = Yajl::load(last_setting.settings)
 				dest = setting["settings"]
 				
@@ -208,7 +208,7 @@ module Ocp::Registry
 				time = Time.now.utc.to_s
 
 				current_setting.comments = "APPROVED"
-				current_setting.update_at = time
+				current_setting.updated_at = time
 				current_setting.save_changes
 
 				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)

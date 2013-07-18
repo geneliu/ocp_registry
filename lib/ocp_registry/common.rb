@@ -1,5 +1,7 @@
 module Ocp::Registry::Common
 
+		EMAIL_REGEX = /[a-z0-9_.-]+@[a-z0-9-]+\.[a-z.]+/
+
 	class << self
 
 		def uuid
@@ -11,7 +13,7 @@ module Ocp::Registry::Common
 		end
 
 		def parse_email(email)
-			return unless email =~ /[a-z0-9_.-]+@[a-z0-9-]+\.[a-z.]+/
+			return unless email =~ EMAIL_REGEX
 				email =~ /([a-z0-9_.-]+)@([a-z0-9-]+\.[a-z.]+)/
 				{
 					:name => $1 ,
