@@ -119,9 +119,9 @@ module Ocp::Registry
 
 			def create_tenant(name, description, enabled = true)
       tenant = {
-        :name => "your project name",
-        :description => "your project description",
-        :enabled => true,
+        :name => name,
+        :description => description,
+        :enabled => enabled,
         :id => "1bb0fed1c2df4b5faa19e7700c049e35"
       }
       Model.new tenant
@@ -133,13 +133,14 @@ module Ocp::Registry
         :enabled => true,
         :name => name,
         :tenant_id => tenant_id, 
-        :password => password
+        :password => password, 
+        :id => "2df4b5faa19c049e351bb0fed1caa19e7700"
       }
       Model.new user
       end
 
       def get_tenant_by_name(name)
-    	nil
+    	 nil
       end
 
       def tenant_add_user_with_role(tenant, user_id, role_id)
@@ -147,14 +148,7 @@ module Ocp::Registry
       end
 
       def find_user_by_name(name)
-    	user = {
-        :email => "#{name}@email.com",
-        :enabled => true,
-        :name => name,
-        :tenant_id => "1bb0fed1c2df4b5faa19e7700c049e35",
-        :password => "passwordxxxxx"
-    	}
-      Model.new user
+    	 nil
       end
 
 			NOVA_QUOTA_FIELDS = ["metadata_items",
