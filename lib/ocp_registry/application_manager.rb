@@ -278,7 +278,7 @@ module Ocp::Registry
 			if @mail_manager
 				admin_msg = {
 					:app_info => app_info , 
-					:comments => comments ,
+					:comments => current_setting.comments ,
 					:application_link => gen_app_uri(app_id, :review => true) ,
 					:applications_link => gen_app_uri
 				}
@@ -286,7 +286,7 @@ module Ocp::Registry
 				@mail_manager.send_mail(mail)
 				user_msg = {
 					:app_info => app_info , 
-					:comments => comments ,
+					:comments => current_setting.comments ,
 					:application_link => gen_app_uri(app_id) ,
 				}
 				mail = prepare_mail_properties(:refuse_user, app_info.email, user_msg)
