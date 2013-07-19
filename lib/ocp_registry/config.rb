@@ -51,7 +51,7 @@ module Ocp::Registry
 
     def migrate_db
       Sequel.extension :migration
-      Sequel::Migrator.apply(@db,File.expand_path('./lib/ocp_registry/db'))
+      Sequel::Migrator.apply(@db,File.expand_path(File.join(File.dirname(__FILE__), 'db')))
     end
 
     def connect_db(db_config)
