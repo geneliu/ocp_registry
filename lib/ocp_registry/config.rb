@@ -86,6 +86,10 @@ module Ocp::Registry
         raise ConfigError, "Cloud configuration is missing from config file"
       end
 
+      if config["cloud"]["login_url"].nil?
+        raise ConfigError, "Cloud Login URL is missing from config file"
+      end
+
       if config["cloud"]["plugin"].nil?
         raise ConfigError, "Cloud plugin is missing from config file"
       end
