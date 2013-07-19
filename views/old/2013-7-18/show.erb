@@ -1,0 +1,96 @@
+<%
+	settings=Yajl::load(data[:registry_settings].first[:settings])
+%>
+
+		<div class="tenantOpt">
+			<ul id="optTab" class="nav nav-tabs">
+				<li><a href="#tenantInfo" data-toggle="tab">Project Info</a></li>
+				<li><a href="#quota" data-toggle="tab">Quota</a></li>
+			</ul>
+			
+			<div class="tab-content">
+				<div class="tab-pane" id="tenantInfo">
+					<label>Project Name</label>
+					<input type="text" name="project" value="<%=data[:project]%>" placeholder="Put the project name here.">
+					
+					<label>Description</label>
+					<input type="text" name="description" value="<%=data[:description]%>" placeholder="Put the project description here.">
+					
+					<label>Email</label>
+					<input type="text" name="email" value="<%=data[:email]%>" placeholder="Put your valid email address here.">
+				</div>
+				<div class="tab-pane" id="quota">
+					<label>Metadata Items</label>
+					<input type="text" name="metadata_items" value="<%=settings["metadata_items"]%>">
+					
+					<label>VCPUs</label>
+					<input type="text" name="cores" value="<%=settings["cores"]%>">
+					
+					<label>Instances</label>
+					<input type="text" name="instances" value="<%=settings["instances"]%>">
+					
+					<label>Injected Files</label>
+					<input type="text" name="injected_files" value="<%=settings["injected_files"]%>">
+					
+					<label>Injected Files Content Bytes</label>
+					<input type="text" name="injected_file_content_bytes" value="<%=settings["injected_file_content_bytes"]%>">
+					
+					<label>Volumes</label>
+					<input type="text" name="volumes" value="<%=settings["volumes"]%>">
+					
+					<label>Gigabytes</label>
+					<input type="text" name="gigabytes" value="<%=settings["gigabytes"]%>">
+					
+					<label>RAM(MB)</label>
+					<input type="text" name="ram" value="<%=settings["ram"]%>">
+					
+					<label>Floating IPs</label>
+					<input type="text" name="floating_ips" value="<%=settings["floating_ips"]%>">
+					
+					<label>Fixed IPs</label>
+					<input type="text" name="fixed_ips" value="<%=settings["fixed_ips"]%>">
+					
+					<label>Security Groups</label>
+					<input type="text" name="security_groups" value="<%=settings["security_groups"]%>">
+					
+					<label>Security Group Rules</label>
+					<input type="text" name="security_group_rules" value="<%=settings["security_group_rules"]%>">
+				</div>
+			</div>
+			
+			<div class="optExplaination" id="optExplaination">
+					Details of your project
+			</div>
+			
+			<div class="clear"></div>
+						
+		</div>
+
+		<script type="text/javascript">
+
+(function(){
+
+	$(document).ready(init);
+
+	function init(){
+		initFields();
+		initOptTab();
+	}
+	
+	function initFields(){
+		var readonly=<%= readonly==true ? 1:0%>;
+		if(readonly){
+			$('.tab-content input').attr('readonly', true);
+			$('.tab-content textarea').attr('readonly', true);
+			$('.tab-content select').attr('disabled', true);
+		}else{
+			//do nothing
+		}
+	}
+	
+	function initOptTab(){
+		$('#optTab a:first').tab('show');
+	}
+
+})();
+	</script>

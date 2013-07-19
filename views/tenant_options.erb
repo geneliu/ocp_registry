@@ -1,0 +1,250 @@
+<%
+	#Expected Passed-in Parameters Below
+	who=(who=='admin')? 'admin' : 'applicant'  		#who is using this page, admin or applier
+	review=review		#is this page used for reviewing a request, or for filling a new request?
+
+	tenant_info=tenant_info
+	quotas_origin=quotas_origin
+	quotas_prev=quotas_prev		#if don't have, set it to null
+
+	#Calculate useful variables
+	whoOppsite=(who=='admin')? 'applicant' : 'admin'
+	compare=(quotas_prev!=nil)		#need to compare current and last version of quotas?
+%>
+
+<div id="tenant-options" class="tenant-opt">
+	<ul class="nav nav-tabs">
+		<li><a href="#tenant-options-tenant-info" data-toggle="tab">Project Info</a></li>
+		<li><a href="#tenant-options-quota" data-toggle="tab">Quota</a></li>
+	</ul>
+	
+	<div class="tab-content to-left">
+		<div class="tab-pane tenant-info" id="tenant-options-tenant-info">
+			<label>Project Name</label>
+			<input type="text" name="project" value="<%=tenant_info[:project]%>" placeholder="Put the project name here.">
+			
+			<label>Description</label>
+			<input type="text" name="description" value="<%=tenant_info[:description]%>" placeholder="Put the project description here.">
+			
+			<label>Email</label>
+			<input type="text" name="email" value="<%=tenant_info[:email]%>" placeholder="Put your valid email address here.">
+		</div>
+		<div class="tab-pane quota" id="tenant-options-quota">
+			<label>Metadata Items</label>
+			<input type="text" name="metadata_items" value="<%=quotas_origin["metadata_items"]%>">
+			
+			<label>VCPUs</label>
+			<input type="text" name="cores" value="<%=quotas_origin["cores"]%>">
+			
+			<label>Instances</label>
+			<input type="text" name="instances" value="<%=quotas_origin["instances"]%>">
+			
+			<label>Injected Files</label>
+			<input type="text" name="injected_files" value="<%=quotas_origin["injected_files"]%>">
+			
+			<label>Injected Files Content Bytes</label>
+			<input type="text" name="injected_file_content_bytes" value="<%=quotas_origin["injected_file_content_bytes"]%>">
+			
+			<label>Volumes</label>
+			<input type="text" name="volumes" value="<%=quotas_origin["volumes"]%>">
+			
+			<label>Gigabytes</label>
+			<input type="text" name="gigabytes" value="<%=quotas_origin["gigabytes"]%>">
+			
+			<label>RAM(MB)</label>
+			<input type="text" name="ram" value="<%=quotas_origin["ram"]%>">
+			
+			<label>Floating IPs</label>
+			<input type="text" name="floating_ips" value="<%=quotas_origin["floating_ips"]%>">
+			
+			<label>Fixed IPs</label>
+			<input type="text" name="fixed_ips" value="<%=quotas_origin["fixed_ips"]%>">
+			
+			<label>Security Groups</label>
+			<input type="text" name="security_groups" value="<%=quotas_origin["security_groups"]%>">
+			
+			<label>Security Group Rules</label>
+			<input type="text" name="security_group_rules" value="<%=quotas_origin["security_group_rules"]%>">
+		</div>
+	</div>
+	
+	<div class="opt-explain to-left">
+			Details of your project ... Details of your project ...
+			Details of your project ... Details of your project ...
+			Details of your project ... Details of your project ...
+			Details of your project ... Details of your project ...
+			Details of your project ... Details of your project ...
+			Details of your project ... Details of your project ...
+			Details of your project ... Details of your project ...
+	</div>
+	
+	<div class="clear-float"></div>
+				
+</div>
+
+<script type="text/javascript">
+
+//The handle to tenant options element
+var tenantOpts={
+	changed: false, 
+	onChange: function(){},
+	onRestore: function(){},
+	restore: function(){},
+
+	getQuotasNow: function(){},
+	quotasOrigin: $.parseJSON('<%=JSON.generate(quotas_origin, quirks_mode: true)%>'), 
+	quotasPrev: $.parseJSON('<%=JSON.generate(quotas_prev, quirks_mode: true)%>'), 
+
+    getData: function(){}, 
+};
+
+(function(){
+
+	$(document).ready(init);
+
+	var review=$.parseJSON('<%=JSON.generate(review, quirks_mode: true)%>');
+	var compare=$.parseJSON('<%=JSON.generate(compare, quirks_mode: true)%>');
+
+	function init(){
+		initTab();
+		initReadonly();
+		initHighlight();
+		initTooltip();
+		initInputEvent();
+		initFunc();
+	}
+	
+	function initTab(){
+		$('#tenant-options .nav-tabs a:first').tab('show');
+	}
+
+	function initReadonly(){
+		if(!review){
+			return;
+		}
+
+		$('#tenant-options .tenant-info input').attr('readonly', 'true');
+	}
+
+	function initHighlight(){
+		if(!compare){
+			return;
+		}
+
+		$.each(util.whoChanged(tenantOpts.quotasOrigin, tenantOpts.quotasPrev), function(i,v){
+			$('#tenant-options .quota input[name='+i+']').addClass('highlight');
+		});
+	}
+
+	function initTooltip(){
+		if(!compare){
+			return;
+		}
+
+		$.each(util.whoChanged(tenantOpts.quotasOrigin, tenantOpts.quotasPrev), function(i,v){
+			var $field=$('#tenant-optons .quota input[name='+i+']');
+			$field.after('<div class="hidden">'
+							+'<p>The <%=whoOppsite%> proposed a new value here. The original is \'<b>'
+							+((v[0]===undefined)?'':v[0])
+							+'</b>\'.</p>'
+						  +'</div>'
+						);
+			$field.qtip({
+				content: {
+					text: $field.next('div')
+				},
+				show: {
+		            effect: function() {
+		                $field.fadeTo(200, 1);
+		            }
+		        },
+		        hide: {
+		            effect: function() {
+		                $field.fadeTo(200, 0);
+		            }
+       			 }
+			});
+
+		});
+	}
+
+	function initInputEvent(){
+
+		function onFieldModified(name){
+			addLabelMark(name);
+
+			if(!tenantOpts.changed){
+				tenantOpts.changed=true;
+				tenantOpts.onChange();
+			}
+		}
+
+		$('#tenant-options .quota input').keydown(function(){
+			var name=$(this).attr('name');
+			onFieldModified(name);
+		});
+	}
+
+	function initFunc(){
+		tenantOpts.restore=restore;
+		tenantOpts.getQuotasNow=getQuotasNow;
+		tenantOpts.getData=getData;
+	}
+
+	function addLabelMark(fieldName){
+		var $label=$('#tenant-options .quota input[name='+fieldName+']').prev('label');
+		if(!($label.text().match(/\*$/))){
+			$label.text($label.text()+' *');
+			$label.css({color: '#CC0000'});
+		}
+	}
+
+	function removeLabelMark(){
+		$('#tenant-options .quota input').each(function(i, v){
+			var $field=$(this);
+			var $label=$field.prev('label');
+
+			if($label.text().match(/\*$/)){
+				$label.text($label.text().slice(0, -2));
+				$label.css({color: 'black'});
+			}
+		});
+	}
+
+	function getQuotasNow(){
+		var ret={};
+		$('#tenant-options .quota input').each(function(){
+			var $field=$(this);
+			var name=$field.attr('name');
+
+			ret[name]=$field.val();
+		});
+
+		return ret;
+	}
+
+	function getData(){
+		var ret={};
+		$('#tenant-options .tenant-info input').each(function(){
+			var $field=$(this);
+			var name=$field.attr('name');
+
+			ret[name]=$field.val();
+		});
+
+		ret.settings=getQuotasNow();
+		return ret;
+	}
+
+	function restore(){
+		removeLabelMark();
+		$('#tenant-options .quota input').each(function(){
+			var $field=$(this);
+			$field.val(tenantOpts.quotasOrigin[$field.attr('name')]);
+		});
+		tenantOpts.changed=false;
+		tenantOpts.onRestore();
+	}
+
+})();
+</script>

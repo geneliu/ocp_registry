@@ -1,0 +1,37 @@
+.post{
+	width: 600px;
+	margin: auto;
+}
+
+.post + .post {
+	margin-top: 5px;
+}
+
+.post .user {
+	padding-right: 10px;
+	border-right: 1px solid #ddd;
+	margin-right: 10px;
+}
+
+.post .user .portrait {
+	width: 60px;
+	height: 60px;
+	border: 3px double #ddd;
+}
+
+.post .user .name {
+	margin: 0px;
+	overflow: hidden;
+	max-width: 66px;
+}
+
+.post .content .text {
+	width: 511px;
+	min-height: 64px;
+}
+
+.post.highlight {
+	background: #FFFFCF;
+	border-color: #FCEB77;
+	border-width: 2px;
+}

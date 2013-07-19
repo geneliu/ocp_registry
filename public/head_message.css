@@ -1,0 +1,11 @@
+.head-message {
+	padding: 2px 10px 2px 10px;
+	width: 600px;
+	margin: auto;
+	background: #D3FAC8;
+	border-color: #1db81d;
+
+	-webkit-border-radius: 0px;
+	-moz-border-radius: 0px;
+	border-radius: 0px;
+}

@@ -1,0 +1,306 @@
+<%
+	#Expected Passed-in Parameters Below
+	data=data
+
+	#Calculate Useful Variables
+	first_version=(nil == data[:registry_settings][1])
+
+	tenant_info=data
+	quotas_origin=Yajl::load(data[:registry_settings][0][:settings])
+	quotas_prev= first_version ? nil : (Yajl::load(data[:registry_settings][1][:settings]))
+
+	applicant_accepted= (quotas_origin == quotas_prev)
+	message= first_version ? (nil) : (applicant_accepted ? "The applicant has accepted the quotas you proposed. " : "The applicant proposed new quotas. ")
+	message_class=(message==nil) ? 'hidden' : '' 
+
+	who='admin'
+	review=true
+
+	comment_list=get_comment_list_from_data(data)	
+%>
+
+<div class="top-spacer"></div>
+
+<div class="head-message box <%=message_class%>">
+	<%=message%>
+</div>
+
+<div id="tenant-opt-dialog" class="dialog tenant-opt-dialog">
+	<legend>Review Project Request</legend>
+
+	<%=erb :tenant_options, :locals => {
+		:who=>who, 
+		:review=>review, 
+		:tenant_info=>tenant_info, 
+		:quotas_origin=>quotas_origin,
+		:quotas_prev=>quotas_prev
+	} %>
+	
+	<div class="action">
+		<button class="hidden inform btn btn-success to-right">Inform Applicant</button>
+		<div class="hidden"><p>Since you have changed the applicant's request, you have to inform the applicant about the change. 
+			After the applicant agrees on the change, you may proceed to approve the request. </p></div>
+
+		<button class="accept btn btn-success to-right">Accept</button>
+		<button class="reject btn btn-warning to-right">Reject</button>
+		
+		<img class="hidden loading to-right" src="/images/loading.gif"  alt="" />
+		
+		<button class="hidden cancel btn to-left">Cancel</button>
+		<button class="hidden back btn to-left">Back</button>
+
+		<div class="clear-float"></div>
+	</div>
+				
+</div>
+
+<%=erb :comment_list, :locals => {:comment_list=>comment_list} %>
+
+<%=erb :reject_comment_dialog%>
+
+<%=erb :inform_comment_dialog%>
+
+<script type="text/javascript">
+
+var id='<%=data[:id]%>';
+var who='<%=who%>';
+
+$(document).ready(init);
+
+function init(){
+	initInformBtnTooltip();
+	initBackAction();
+	initAcceptAction();
+	initRejectAction();
+	initRejectDialogConfirmAction();
+	initRejectDialogCancelAction();
+	initInformAction();
+	initChangeCancelAction();
+	initInformDialogConfirmAction();
+	initInformDialogCancelAction();
+	initChangeQuotasEvent();
+}
+
+function initInformBtnTooltip(){
+	var $btn=$('#tenant-opt-dialog .action button.inform');
+	$btn.qtip({
+		content: {
+			text: $btn.next('div')
+		},
+		show: {
+            effect: function() {
+                $btn.fadeTo(200, 1);
+            }
+        },
+        hide: {
+            effect: function() {
+                $btn.fadeTo(200, 0);
+            }
+			 }
+	});
+}
+
+function initBackAction(){
+	$('#tenant-opt-dialog .action button.back').click(function(){
+		window.location='/v1/applications';
+	});
+}
+
+function initAcceptAction(){
+	$('#tenant-opt-dialog .action button.accept').click(function(){
+		$.noty.closeAll();
+
+		$('#tenant-opt-dialog .action button.accept').text("Loading ...");
+		$('#tenant-opt-dialog .action button').attr('disabled', 'true');
+		$('#tenant-opt-dialog .action img.loading').show();
+
+		var url='/v1/applications/'+id+'/approve';
+		var data={
+			from: who
+		};
+		data=$.toJSON(data);
+
+		$.post(url, data, 'json').done(function(data){
+			setTimeout(function(){
+				data = $.parseJSON(data);
+
+				if(data.status&&data.status=='error'){
+					noty({text: 'Failed to Submit: '+(data.message?data.message:'Unknown Error'), type:'error'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button').removeAttr('disabled');
+					$('#tenant-opt-dialog .action button.accept').text('Accept');
+
+				}else{
+					noty({text: 'Successfully Submitted Your Decision (Accept)!', type:'success'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button.accept').text("Complete");
+					$('#tenant-opt-dialog .action button.back').removeAttr('disabled').show();
+				}
+
+			}, 2000);
+		}).fail(function(){
+			setTimeout(function(){
+				noty({text: 'Failed to Submit: Server Error. You May Retry Later.', type:'error'});
+				
+				$('#tenant-opt-dialog .action img.loading').hide();
+				$('#tenant-opt-dialog .action button').removeAttr('disabled');
+				$('#tenant-opt-dialog .action button.accept').text('Accept');
+			}, 2000);
+
+		});//end of fail()
+
+	});//end of click()
+}
+
+function initRejectAction(){
+	$('#tenant-opt-dialog .action button.reject').click(function(){
+		$('#tenant-opt-dialog .action button').attr('disabled', 'true');
+		$('#reject-dialog').modal();
+	});
+}
+
+function initRejectDialogConfirmAction(){
+	$('#reject-dialog .action button.confirm').click(function(){
+		$.noty.closeAll();
+		$('#reject-dialog').modal('hide');
+
+		$('#tenant-opt-dialog .action button.reject').text("Loading ...");
+		$('#tenant-opt-dialog .action button').attr('disabled', 'true');
+		$('#tenant-opt-dialog .action img.loading').show();
+
+		var url='/v1/applications/'+id+'/refuse';
+		var data={
+			from: who,
+			comments: $('#reject-dialog textarea[name=comment]').val()
+		};
+		data=$.toJSON(data);
+
+		$.post(url, data, 'json').done(function(data){
+			setTimeout(function(){
+				data = $.parseJSON(data);
+				if(data.status&&data.status=='error'){
+					noty({text: 'Failed to Submit: '+(data.message?data.message:'Unknown Error'), type:'error'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button').removeAttr('disabled');
+					$('#tenant-opt-dialog .action button.reject').text('Reject');
+
+				}else{
+					noty({text: 'Successfully Submitted Your Decision (Reject)!', type:'success'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button.reject').text("Complete");
+					$('#tenant-opt-dialog .action button.back').removeAttr('disabled').show();
+				}
+
+			}, 2000);
+		}).fail(function(){
+			setTimeout(function(){
+				noty({text: 'Failed to Submit: Server Error. You May Retry Later.', type:'error'});
+				
+				$('#tenant-opt-dialog .action img.loading').hide();
+				$('#tenant-opt-dialog .action button').removeAttr('disabled');
+				$('#tenant-opt-dialog .action button.reject').text('Reject');
+			}, 2000);
+			
+		});//end of fail()
+	});//end of click();
+}
+
+function initRejectDialogCancelAction(){
+	$('#reject-dialog .action button.cancel').click(function(){
+		$('#tenant-opt-dialog .action button').removeAttr('disabled');
+		$('#reject-dialog').modal('hide');
+	});
+}
+
+function initChangeQuotasEvent(){
+	tenantOpts.onChange=function(){
+		$.noty.closeAll();
+		noty({text: "The Applicant's Request Has Been Changed. You Need to 'Inform Applicant' for His/Her Agreement Before You Approve This Request."});
+
+		$('#tenant-opt-dialog .action button').hide();
+		$('#tenant-opt-dialog .action button.cancel').show();
+		$('#tenant-opt-dialog .action button.inform').show();
+	};
+
+	tenantOpts.onRestore=function(){
+		$('#tenant-opt-dialog .action button').hide();
+		$('#tenant-opt-dialog .action button.accept').show();
+		$('#tenant-opt-dialog .action button.reject').show();	
+	};
+}
+
+function initInformAction(){
+	$('#tenant-opt-dialog .action button.inform').click(function(){
+		$('#tenant-opt-dialog .action button').attr('disabled', 'true');
+		$('#inform-dialog').modal();
+	});
+}
+
+function initChangeCancelAction(){
+	$('#tenant-opt-dialog .action button.cancel').click(function(){
+		tenantOpts.restore();
+	});
+}
+
+function initInformDialogConfirmAction(){
+	$('#inform-dialog .action button.confirm').click(function(){
+		$.noty.closeAll();
+		$('#inform-dialog').modal('hide');
+
+		$('#tenant-opt-dialog .action button.inform').text("Loading ...");
+		$('#tenant-opt-dialog .action button').attr('disabled', 'true');
+		$('#tenant-opt-dialog .action img.loading').show();
+
+		var url='/v1/applications/'+id+'/settings';
+		var data={
+			from: who,
+			comments: $('#inform-dialog textarea[name=comment]').val(),
+			settings: tenantOpts.getQuotasNow()
+		};
+		data=$.toJSON(data);
+
+		$.post(url, data, 'json').done(function(data){
+			setTimeout(function(){
+				data = $.parseJSON(data);
+				if(data.status&&data.status=='error'){
+					noty({text: 'Failed to Submit: '+(data.message?data.message:'Unknown Error'), type:'error'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button').removeAttr('disabled');
+					$('#tenant-opt-dialog .action button.inform').text('Inform Applicant');
+
+				}else{
+					noty({text: 'Successfully Submitted Your Proposal for Applicant!', type:'success'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button.inform').text("Complete");
+					$('#tenant-opt-dialog .action button.cancel').hide();
+					$('#tenant-opt-dialog .action button.back').removeAttr('disabled').show();
+				}
+
+			}, 2000);
+		}).fail(function(){
+			setTimeout(function(){
+				noty({text: 'Failed to Submit: Server Error. You May Retry Later.', type:'error'});
+				
+				$('#tenant-opt-dialog .action img.loading').hide();
+				$('#tenant-opt-dialog .action button').removeAttr('disabled');
+				$('#tenant-opt-dialog .action button.inform').text('Inform Applicant');
+			}, 2000);
+			
+		});//end of fail()
+	});//end of click();
+}
+
+function initInformDialogCancelAction(){
+	$('#inform-dialog .action button.cancel').click(function(){
+		$('#tenant-opt-dialog .action button').removeAttr('disabled');
+		$('#inform-dialog').modal('hide');
+	});
+}
+
+</script>

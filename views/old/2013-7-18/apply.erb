@@ -1,0 +1,134 @@
+
+<div class="bordered optDialog">
+	<legend>Create Project</legend>
+	
+	<%=erb :show, :locals => {:data=>data, :readonly=>false} %>
+	
+	<div class="optAction" id="optAction">
+		<button id="optSubmit" type="button" class="btn btn-primary toRight" 
+			data-loading-text="Loading ..." 
+			data-complete-text="Completed!">
+			Submit</button>
+		<img class="loadingIcon toRight" id="optActionLoadingIcon" src="/images/loading.gif"  alt="" />
+		<div class="clear"></div>
+	</div>
+				
+</div>
+
+	
+<script type="text/javascript">
+
+(function(){
+
+	$(document).ready(init);
+
+	function init(){
+		initOptSubmit();
+	}
+	
+	function initOptSubmit(){
+		$('#optSubmit').click(function(){
+			$.noty.closeAll();
+
+			//check the data corrections
+			var ret=checkTenantFields();
+			if(!ret.ret){
+				var fieldNamesStr="";
+				$.each(ret.fields, function(i, v){
+					if(i>=ret.fields.length-1){
+						fieldNamesStr+=v;
+					}else{
+						fieldNamesStr+=v+" and ";
+					}
+				});
+
+				noty({text: "Field "+fieldNamesStr+" "+((ret.fields.length>1)?"are":"is")+" invalid.", type: 'error'});
+				return;
+			}
+
+			//do the submission
+			submitBtnToLoading();
+			var data=generateTenantRequest();
+
+			$.post('/v1/applications', data, 'json').done(function(data){
+				data = $.evalJSON(data);
+				if(data.status&&data.status=='error'){
+					//server returned error
+					noty({text: 'Failed to Submit Your Request: '+(data.message?data.message:'Unknown Error'), type:'error'});
+					submitBtnToReady();
+				}else{
+					noty({text: 'Successfully Submitted Your Request! You Can Close This Window Now.', type:'success'});
+					submitBtnToComplete();
+				}
+			}).fail(function(){
+				noty({text: 'Failed to Submit Your Request: Connection Error. You May Retry Later.', type:'error'});
+				submitBtnToReady();
+			});
+
+		});
+	}
+	
+	function submitBtnToLoading(){
+		$('#optSubmit').button('loading');
+		$('#optSubmit').attr('disabled', 'true');
+		$('#optActionLoadingIcon').show();
+	}
+	
+	function submitBtnToReady(){
+		$('#optSubmit').button('reset');
+		$('#optSubmit').removeAttr('disabled');
+		$('#optActionLoadingIcon').hide();
+	}
+	
+	function submitBtnToComplete(){
+		//$('#optSubmit').button('complete');	//BUG here: I don't use this. Because this will cause the button to be enabled. I want it to keep disabled.
+		$('#optSubmit').text("Completed");
+		$('#optSubmit').attr('disabled', 'true');
+		$('#optActionLoadingIcon').hide();
+	}
+
+	function checkTenantFields(){
+		var project=$('#tenantInfo input[name=project]').val();
+		var email=$('#tenantInfo input[name=email]').val();
+
+		var result={ret:true, fields:[]};
+
+		if(!project||project.length<=0){
+			result.ret=false;
+			result.fields.push("project");
+		}
+		if(!email||email.length<=0){
+			result.ret=false;
+			result.fields.push("email");
+		}
+
+		return result;
+	}
+	
+	function generateTenantRequest(){
+		var data={
+			project : $('#tenantInfo input[name=project]').val(),
+			description : $('#tenantInfo input[name=description]').val(),
+			email : $('#tenantInfo input[name=email]').val(),
+			settings : 
+			{
+				metadata_items : $('#quota input[name=metadata_items]').val(),
+				cores : $('#quota input[name=cores]').val(),
+				instances : $('#quota input[name=instances]').val(),
+				injected_files : $('#quota input[name=injected_files]').val(),
+				injected_file_content_bytes : $('#quota input[name=injected_file_content_bytes]').val(),
+				volumes : $('#quota input[name=volumes]').val(),
+				gigabytes : $('#quota input[name=gigabytes]').val(),
+				ram : $('#quota input[name=ram]').val(),
+				floating_ips : $('#quota input[name=floating_ips]').val(),
+				fixed_ips : $('#quota input[name=floating_ips]').val(),
+				security_groups : $('#quota input[name=security_groups]').val(),
+				security_group_rules : $('#quota input[name=security_group_rules]').val()
+			}
+		};
+		return  $.toJSON( data );
+	}
+
+})();
+
+</script>

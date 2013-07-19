@@ -1,0 +1,18 @@
+.tenant-opt input.highlight {
+	background: #FFFFCF;
+}
+
+.tenant-opt label {
+	font-weight: bold;
+}
+
+.tenant-opt .tab-content {
+	border-right: 1px solid #ddd;
+	width: 285px;
+}
+
+.tenant-opt .opt-explain {
+	overflow: hidden;
+	max-width: 300px;
+	padding-left: 10px;
+}
