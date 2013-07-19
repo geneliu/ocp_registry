@@ -95,17 +95,17 @@ module Ocp::Registry
 				return {:status => "error", :message => "No changes in settings are found"} if change_set.empty?
 
 				set = Yajl::Encoder.encode(merged)
-				comments = "NO"
+				comments = "#{setting["comments"]}" if setting["comments"]				
 
 				@logger.info("Project [#{app_info.project}] - [#{app_info.id}] setting changed : #{change_set}")
 			else
 				set = last_setting.settings
-				comments = "YES"
+				comments = "ACCEPT"
+				comments += " - #{setting["comments"]}" if setting["comments"]
 
 				@logger.info("Project [#{app_info.project}] - [#{app_info.id}] setting accepted : #{set}")
 			end
 
-			comments += " - #{setting["comments"]}" if setting["comments"]
 
 			update_time = Time.now.utc.to_s
 			last_setting.comments = comments
