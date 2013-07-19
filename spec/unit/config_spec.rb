@@ -90,10 +90,9 @@ describe Ocp::Registry do
 			db_config = default_config["db"]
 			db = Ocp::Registry.connect_db(db_config)
 
-			db.database_type.should == "sqlite"
-		end
-
-		it "migrate_db" do
+      db.should be_kind_of(Sequel::SQLite::Database)
+			db.database_type.should == :sqlite
+      db.opts[:database].should == ":memory:"
 		end
 
 	end
@@ -101,6 +100,15 @@ describe Ocp::Registry do
 	describe "Mail configuration" do
 
 		it "init mail client" do
+      mail_config = {
+        "admin_emails" => ["admin@mails.com", "admin2@mails.com"],
+        "worker" => 1 ,
+        "smtp_server" => "127.0.0.1" ,
+        "helo" => "test.com"
+      }
+      mailer = Ocp::Registry.init_mail_client(mail_config)
+      mailer.should be_kind_of(Ocp::Registry::MailClient)
+      mailer.admin_emails.should == ["admin@mails.com", "admin2@mails.com"]
 		end
 
 	end

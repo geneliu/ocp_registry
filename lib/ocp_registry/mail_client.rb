@@ -7,7 +7,7 @@ module Ocp::Registry
 		DEFAULT_WORKER = 1
 		DEFAULT_PORT = '25' 
 		DEFAULT_HELO = 'ocp.com'
-		TEMPLATES_PATH = 'mail_template'
+		TEMPLATES_PATH = File.join(File.dirname(__FILE__),'../../mail_template')
 		DEFAULT_FROM = 'registry@ocp.com'
 		DEFAULT_TLS = false
 		DEFAULT_ADMIN_EMAIL = 'admin@ocp.com'
@@ -54,7 +54,7 @@ module Ocp::Registry
 
 		def mail_validated?(mail_info)
 			unless mail_info[:from] && mail_info[:to] && mail_info[:template] && has_template?(mail_info[:template])
-				@logger.waring "Mail is ignored because less of necessary fields "
+				@logger.warning "Mail is ignored because less of necessary fields "
 				return false
 			end
 				true
