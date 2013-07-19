@@ -1,7 +1,44 @@
+<%
+	#Expected Passed-in Parameters Below
+	data=data
 
-<div class="bordered optDialog">
-	<legend>Browse Project Request</legend>
+	#Calculate Useful Variables
+	first_version=(nil == data[:registry_settings][1])
 
-	<%=erb :show, :locals => {:data=>data, :readonly=>true} %>
-				
+	tenant_info=data
+	quotas_origin=Yajl::load(data[:registry_settings][0][:settings])
+	quotas_prev= first_version ? nil : (Yajl::load(data[:registry_settings][1][:settings]))
+
+	comment_list=get_comment_list_from_data(data)
+%>
+
+<div id="tenant-opt-dialog" class="dialog tenant-opt-dialog">
+	<legend>View Project Request</legend>
+
+	<%=erb :tenant_options, :locals => {
+		:who=>'applicant', 
+		:review=>true, 
+		:tenant_info=>tenant_info, 
+		:quotas_origin=>quotas_origin,
+		:quotas_prev=>quotas_prev
+	} %>		
 </div>
+
+<%=erb :comment_list, :locals => {:comment_list=>comment_list} %>
+
+<script type="text/javascript">
+
+$(document).ready(init);
+
+function init(){
+	initReadonly();
+}
+
+function initReadonly(){
+	$('#tenant-opt-dialog input').each(function(i,v){
+		var $field=$(this);
+		$field.attr('readonly', 'true');
+	});
+}
+
+</script>

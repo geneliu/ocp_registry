@@ -1,0 +1,12 @@
+<%
+	#Expected Passed-in Parameters Below
+	comment_list=comment_list		# an array of {'who'=>?, 'text'=>?, 'date'=>?, 'highlight'=>?}
+%>
+
+<div class="comment-list">
+<% comment_list.each do |c| %>
+
+	<%=erb :post, :locals => {:who=>c[:who], :text=>c[:text], :date=>c[:date], :highlight=>c[:highlight]} %>
+
+<% end %>
+</div>

@@ -1,0 +1,11 @@
+.comment-dialog {
+	width: 400px;
+	margin-left: -200px;
+}
+
+.comment-dialog textarea {
+	width: 360px;
+	height: 200px;
+	resize: none;
+	margin-left: 12px;
+}

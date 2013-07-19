@@ -1,0 +1,28 @@
+<%
+	#Expected Passed-in Parameters Below
+	text=text
+	date=date
+	who=(who=='admin') ? 'admin' : 'applicant'
+	highlight=highlight
+
+	#Calculate Useful Variables
+	who_name=(who=='admin') ? 'Admin' : 'Applicant'
+	portrait_path=(who=='admin') ? '/images/portrait_admin.png' : '/images/portrait_applicant.png' 
+	highlight_class=highlight ? 'highlight' : '' 
+
+%>
+
+<div class="post box <%=highlight_class%>">
+	<div class="user to-left">
+		<img class="portrait" src="<%=portrait_path%>" alt="No Portrait"></img>
+		<label class="name text-center"><%=who_name%></label>
+	</div>
+	<div class="content to-left">
+		<div class="text"><%=text%></div>
+		<div class="tool">
+			<div class="date to-right"><%=date%></div>
+			<div class="clear-float"></div>
+		</div>
+	</div>
+	<div class="clear-float"></div>
+</div>

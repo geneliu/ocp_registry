@@ -67,18 +67,18 @@ module Ocp::Registry
         if("true" == params[:review])
           protected!
           if "true" == params[:modified]
-      		  data = application.to_hash(:lazy_load => false, :limit => 2)
-            view = :admin_modify
+      		  data = application.to_hash(:lazy_load => false, :limit => 20) 
+            view = :admin_review
           else
-            data = application.to_hash(:lazy_load => false, :limit => 1)
-            view = :review
+            data = application.to_hash(:lazy_load => false, :limit => 10)
+            view = :admin_review
           end
         else
           if "true" == params[:modified]
-            data = application.to_hash(:lazy_load => false, :limit => 2)
-            view = :user_modify
+            data = application.to_hash(:lazy_load => false, :limit => 20)
+            view = :applicant_review
           else
-            data = application.to_hash(:lazy_load => false, :limit => 1)
+            data = application.to_hash(:lazy_load => false, :limit => 10)
             view = :view
           end
         end
