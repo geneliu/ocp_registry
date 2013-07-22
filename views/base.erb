@@ -10,8 +10,9 @@
             end
 
             comment_list.push({
-                :who => (rand(2)>0) ? 'admin' : 'applicant',            #TODO Currently I don't know who said this comment
-                :text => d[:comments],                                  #TODO Remove the "YES", "NO" received from server text
+                #Here a little odd, when the setting is from USER, the comments of the setting is from admin
+                :who =>  d[:from] == "USER" ? 'admin' : 'applicant', 
+                :text => d[:comments],      
                 :date => d[:updated_at],
                 :highlight => false
             });

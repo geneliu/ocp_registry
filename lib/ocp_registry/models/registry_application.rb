@@ -7,7 +7,7 @@ module Ocp::Registry::Models
   		values[:state] = 'PENDING'
   	end
 
-  	one_to_many :registry_settings, :select => [:id ,:comments, :settings, :updated_at], :order => :version
+  	one_to_many :registry_settings, :select => [:id ,:comments, :settings, :updated_at, :from], :order => :version
 
   	def to_hash(opts = {})
   		hash = self.values
