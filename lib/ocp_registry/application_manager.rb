@@ -24,9 +24,9 @@ module Ocp::Registry
 
 			app_info = get_application(app_id)
 
-			unless app_info.state == 'PENDING'
-				return {:status => "error", :message => "Application [#{app_info.project}] - [#{app_id}] has been #{app_info.state}"} 
-			end
+			valid , message = application_valid? app_info
+
+			return message unless valid
 			
 			Ocp::Registry::Models::RegistryApplication.where(:id => app_id).update(:state => 'CANCELED', :end_at => Time.now.utc.to_s)
 
@@ -68,6 +68,10 @@ module Ocp::Registry
 		def add_setting_for(app_id, setting)
 
 			app_info = get_application(app_id)
+
+			valid , message = application_valid? app_info
+
+			return message unless valid
 
 			last_setting = Ocp::Registry::Models::RegistrySetting.where(:registry_application_id => app_id).order_by(:version).last
 																													 
@@ -171,9 +175,9 @@ module Ocp::Registry
 		def approve(app_id)
 			app_info = get_application(app_id)
 
-			return {:status => "error", :message => "Application with id - [#{app_id}] is not existed"} if app_info.nil?
+			valid , message = application_valid? app_info
 
-			return {:status => "error", :message => "Application [#{app_info.project}] - [#{app_id}] has been #{app_info.state}"} unless app_info.state == 'PENDING'
+			return message unless valid
 
 			unless existed_tenant?(app_info.project, :find_local => false)
 				# create project tenant and user
@@ -250,13 +254,9 @@ module Ocp::Registry
 		def refuse(app_id,comments)
 			app_info = get_application(app_id)
 
-			if app_info.nil?
-				return {:status => "error", :message => "Application with id - [#{app_id}] is not existed"}
-			end
+			valid , message = application_valid? app_info
 
-			unless app_info.state == 'PENDING'
-				return {:status => "error", :message => "Application [#{app_info.project}] - #{app_id} has been #{app_info.state}"} 
-			end
+			return message unless valid
 
 			comments ||= "no comments"
 			time = Time.now.utc.to_s
@@ -368,6 +368,18 @@ module Ocp::Registry
 			end
 
 			uri = URI::HTTP.build(:host => host, :port => port, :path => path, :query => query).to_s
+		end
+
+		def application_valid?(app_info)
+			if app_info.nil?
+				return false , {:status => "error", :message => "Application with id - [#{app_id}] is not existed"}
+			end
+
+			unless app_info.state == 'PENDING'
+				return false , {:status => "error", :message => "Application [#{app_info.project}] - #{app_id} has been #{app_info.state}"} 
+			end
+
+			return true
 		end
 
 	end
