@@ -86,8 +86,8 @@ var tenantOpts={
 	restore: function(){},
 
 	getQuotasNow: function(){},
-	quotasOrigin: $.parseJSON('<%=JSON.generate(quotas_origin, quirks_mode: true)%>'), 
-	quotasPrev: $.parseJSON('<%=JSON.generate(quotas_prev, quirks_mode: true)%>'), 
+	quotasOrigin: $.parseJSON('<%=json(quotas_origin)%>'),
+	quotasPrev: $.parseJSON('<%=json(quotas_origin)%>'), 
 
     getData: function(){}, 
 };
@@ -96,8 +96,8 @@ var tenantOpts={
 
 	$(document).ready(init);
 
-	var review=$.parseJSON('<%=JSON.generate(review, quirks_mode: true)%>');
-	var compare=$.parseJSON('<%=JSON.generate(compare, quirks_mode: true)%>');
+	var review=$.parseJSON('<%=json(review)%>');
+	var compare=$.parseJSON('<%=json(compare)%>');
 
 	function init(){
 		initTab();
