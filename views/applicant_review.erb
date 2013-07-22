@@ -36,7 +36,11 @@
 	
 	<div class="action">
 		<button class="hidden inform btn btn-success to-right">Inform Admin</button>
-		<div class="hidden"><p>Since you have changed the request, you have to inform admin for his/her agreement. </p></div>
+		<div class="hidden">
+			&nbsp;&nbsp;&nbsp;&nbsp;Since you have changed the applicant's request, you have to inform the applicant about the change. 
+			<br /><br />
+			&nbsp;&nbsp;&nbsp;&nbsp;After the applicant agrees on the change, you may proceed to approve the request.
+		</div>
 
 		<button class="accept btn btn-success to-right">Accept</button>
 		
@@ -74,17 +78,7 @@ function initInformBtnTooltip(){
 	$btn.qtip({
 		content: {
 			text: $btn.next('div')
-		},
-		show: {
-            effect: function() {
-                $btn.fadeTo(200, 1);
-            }
-        },
-        hide: {
-            effect: function() {
-                $btn.fadeTo(200, 0);
-            }
-			 }
+		}
 	});
 }
 
