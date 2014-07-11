@@ -12,9 +12,9 @@ module Ocp::Registry
 	      #}
 	      def create_tenant(name, description, enabled = true)
 	      	with_openstack do 
-	        	keystone.tenants.create( :name => name ,
-	        														:description => description ,
-	        														:enabled => enabled )
+	        	keystone.tenants.create(:name => name ,
+	        													:description => description ,
+	        													:enabled => enabled )
 	      	end
 	      end
 
@@ -24,12 +24,12 @@ module Ocp::Registry
 	      #  "enabled": true,
 	      #  "OS-KSADM:password": "secrete"
 	      #}
-	      def create_user(name, tenant_id, password, email = '')
+	      def create_user(name, password, email = '')
 	      	with_openstack do 
-		        keystone.users.create( :name => name,
-		        												:tenant_id => tenant_id,
-		        												:password => password,
-		        												:email => email)
+		        keystone.users.create(:name => name,
+		        											:tenant_id => nil,
+		        											:password => password,
+		        											:email => email)
 	      	end
 	      end
 

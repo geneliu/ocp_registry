@@ -172,6 +172,50 @@ module Ocp::Registry
 
 		end
 
+		def create_tenant(name, description)
+			tenant = @cloud_manager.create_tenant(name, description)
+			@logger.info("Project [#{tenant.name}] - [#{tenant.id}] has been created with detailed json - #{tenant.to_json}")
+			return tenant
+		end
+
+		def create_user(email)
+			username = Ocp::Registry::Common.parse_email(email)[:name]
+			user = @cloud_manager.find_user_by_name(username)
+			if user.nil?
+				password = Ocp::Registry::Common.gen_password
+				user = @cloud_manager.create_user(username, password, email)
+				@logger.info("User [#{user.name}] - [#{user.id}] has been created with detailed json - #{user.to_json}")
+			else
+				password = "<your-password-in-previous-project>"
+				@logger.info("Using existed User [#{user.name}] - [#{user.id}] with detailed json - #{user.to_json}")
+			end
+			return user
+		end
+
+		def assign_user_to_tenant(tenant, user_id)
+			role = @cloud_manager.default_role
+			@cloud_manager.tenant_add_user_with_role(tenant, user_id, role.id)
+			@logger.info("User [#{user.name}] - [#{user.id}] has been added into 
+										project [#{tenant.name}] - [#{tenant.id}] as [#{role.name}] - [#{role.id}]")
+		end
+
+		def set_quota_for_tenant(tenant, last_settings)
+			settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(last_settings))
+			@logger.info("Quota for project [#{tenant.name}] - [#{tenant.id}] has been
+									 set as json - #{last_settings}")
+		end
+
+		def set_application_status(status, app_info, current_setting, comments="no comments")
+			time = Time.now.utc.to_s
+			current_setting.comments = "#{status}  #{comments}"
+			current_setting.updated_at = time
+			app_info.state = status
+			app_info.end_at = time
+			current_setting.save_changes
+			app_info.save_changes
+			@logger.info("Project [#{app_info.project}] - [#{app_info.id}] has been [#{status}] at #{time}")
+		end
+
 		def approve(app_id)
 			app_info = get_application(app_id)
 
@@ -181,44 +225,20 @@ module Ocp::Registry
 
 			unless existed_tenant?(app_info.project, :find_local => false)
 				# create project tenant and user
-				tenant = @cloud_manager.create_tenant(app_info.project, app_info.description)
+				tenant = create_tenant(app_info.project, app_info.description)
 
-				@logger.info("Project [#{tenant.name}] - [#{tenant.id}] has been created with detailed json - #{tenant.to_json}")
+				user = create_user(app_info.email)
 
-				username = Ocp::Registry::Common.parse_email(app_info.email)[:name]
-
-				user = @cloud_manager.find_user_by_name(username)
-
-				if user.nil?
-					password = Ocp::Registry::Common.gen_password
-					user = @cloud_manager.create_user(username, tenant.id, password, app_info.email)
-					@logger.info("User [#{user.name}] - [#{user.id}] has been created with detailed json - #{user.to_json}")
-				else
-					password = "<your-password-in-other-project>"
-					@logger.info("Using existed User [#{user.name}] - [#{user.id}] with detailed json - #{user.to_json}")
-				end
-
-				role = @cloud_manager.default_role
-
-				@cloud_manager.tenant_add_user_with_role(tenant, user.id, role.id)
-
-				@logger.info("User [#{user.name}] - [#{user.id}] has been added into project [#{tenant.name}] - [#{tenant.id}] as [#{role.name}] - [#{role.id}]")
-
+				assign_user_to_tenant(tenant, user.id)
+				
 				#assign quota to project
-
 				current_setting = app_info.registry_settings_dataset.order_by(:version).last
-				settings = @cloud_manager.set_tenant_quota(tenant.id, Yajl.load(current_setting.settings))
-
-				time = Time.now.utc.to_s
-
-				current_setting.comments = "APPROVED"
-				current_setting.updated_at = time
-				current_setting.save_changes
-
-				Ocp::Registry::Models::RegistryApplication.where(:id => app_id)
-																									.update(:state => 'APPROVED', :end_at => time)
-
-				@logger.info("Project [#{app_info.project}] - [#{app_info.id}] is [APPROVED] at #{time} - setting : #{settings}")
+				set_quota_for_tenant(tenant, current_setting.settings)
+				
+				#post actions
+				
+				#update application status
+				update_application_status('APPROVED', app_info, current_setting)
 
 				app_info = get_application(app_id)
 
@@ -251,27 +271,17 @@ module Ocp::Registry
 
 		end
 
-		def refuse(app_id,comments)
+		def refuse(app_id, comments)
 			app_info = get_application(app_id)
 
 			valid , message = application_valid? app_info
 
 			return message unless valid
 
-			comments ||= "no comments"
-			time = Time.now.utc.to_s
 
-			app_info.state = 'REFUSED'
-			app_info.end_at = time
+			#update application status
 			current_setting = app_info.registry_settings_dataset.order_by(:version).last
-			current_setting.updated_at = time
-
-			current_setting.comments = "REFUSED - #{comments}"
-
-			current_setting.save_changes
-			app_info.save_changes
-
-			@logger.info("Project [#{app_info.project}] - [#{app_info.id}] is [REFUSED] at #{time} - setting : #{current_setting.settings}")
+			update_application_status('REFUSED', app_info, current_setting, comments)
 
 			app_info = get_application(app_id)
 
