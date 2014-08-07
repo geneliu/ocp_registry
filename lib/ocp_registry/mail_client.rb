@@ -5,7 +5,7 @@ module Ocp::Registry
 		require "thread"
 
 		DEFAULT_WORKER = 1
-		DEFAULT_PORT = '25' 
+		DEFAULT_PORT = '25'
 		DEFAULT_HELO = 'ocp.com'
 		TEMPLATES_PATH = File.join(File.dirname(__FILE__),'../../mail_template')
 		DEFAULT_FROM = 'registry@ocp.com'

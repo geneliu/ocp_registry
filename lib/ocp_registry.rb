@@ -27,3 +27,5 @@ require "ocp_registry/common"
 
 
 Sequel::Model.plugin :validation_helpers
+# TODO https to ocpchinalab needs CA verified, for now we just omit it
+Excon.defaults[:ssl_verify_peer] = false
