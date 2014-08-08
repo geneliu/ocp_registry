@@ -36,11 +36,6 @@
 	
 	<div class="action">
 		<button class="hidden inform btn btn-success to-right">Inform Admin</button>
-		<div class="hidden">
-			&nbsp;&nbsp;&nbsp;&nbsp;Since you have changed the applicant's request, you have to inform the applicant about the change. 
-			<br /><br />
-			&nbsp;&nbsp;&nbsp;&nbsp;After the applicant agrees on the change, you may proceed to approve the request.
-		</div>
 
 		<button class="accept btn btn-success to-right">Accept</button>
 		
@@ -64,7 +59,6 @@ var who='<%=who%>';
 $(document).ready(init);
 
 function init(){
-	initInformBtnTooltip();
 	initAcceptAction();
 	initInformAction();
 	initChangeCancelAction();

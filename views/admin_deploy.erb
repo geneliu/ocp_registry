@@ -1,0 +1,96 @@
+<%
+	#Expected Passed-in Parameters Below
+	data=data
+	who='admin'
+	review=false
+
+	#Calculate Useful Variables
+	first_version=(nil == data[:registry_settings][1])
+	tenant_info=data
+	quotas_origin=Yajl::load(data[:registry_settings][0][:settings])
+	quotas_prev= first_version ? nil : (Yajl::load(data[:registry_settings][1][:settings]))
+	comment_list=get_comment_list_from_data(data)	
+%>
+
+<div class="top-spacer"></div>
+<div class="head-message box">
+	Please fill in advanced network information.
+</div>
+<div id="tenant-opt-dialog" class="dialog tenant-opt-dialog">
+	<legend>Review Project Request</legend>
+	<%=erb :tenant_options, :locals => {
+		:who=>who, 
+		:review=>review, 
+		:tenant_info=>tenant_info, 
+		:quotas_origin=>quotas_origin,
+		:quotas_prev=>quotas_prev,
+		:enable_highlight=>false
+	} %>
+	<div class="action">
+		<button class="accept btn btn-success to-right">Deploy</button>
+		<img class="hidden loading to-right" src="/images/loading.gif"  alt="" />
+		<button class="hidden cancel btn to-left">Cancel</button>
+		<div class="clear-float"></div>
+	</div>
+</div>
+<%=erb :comment_list, :locals => {:comment_list=>comment_list} %>
+
+<script type="text/javascript">
+var id='<%=data[:id]%>';
+var who='<%=who%>';
+
+$(document).ready(function(){
+	initAcceptAction();
+	initMisc();
+});
+
+function initAcceptAction(){
+	$('#tenant-opt-dialog .action button.accept').click(function(){
+		$.noty.closeAll();
+
+		$('#tenant-opt-dialog .action button.accept').text("Loading ...");
+		$('#tenant-opt-dialog .action button').attr('disabled', 'true');
+		$('#tenant-opt-dialog .action img.loading').show();
+
+		var url='/v1/applications/'+id+'/deploy';
+		data=$.toJSON(tenantOpts.getQuotasNow());
+
+		$.post(url, data, 'json').done(function(data){
+			setTimeout(function(){
+				data = $.parseJSON(data);
+
+				if(data.status&&data.status=='error'){
+					noty({text: 'Failed to Submit: '+(data.message?data.message:'Unknown Error'), type:'error'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button').removeAttr('disabled');
+					$('#tenant-opt-dialog .action button.accept').text('Deploy');
+
+				}else{
+					noty({text: 'Successfully Deployed New Project!', type:'success'});
+					
+					$('#tenant-opt-dialog .action img.loading').hide();
+					$('#tenant-opt-dialog .action button.accept').text("Complete");
+				}
+
+			}, 2000);
+		}).fail(function(){
+			setTimeout(function(){
+				noty({text: 'Failed to Submit: Server Error. You May Retry Later.', type:'error'});
+				
+				$('#tenant-opt-dialog .action img.loading').hide();
+				$('#tenant-opt-dialog .action button').removeAttr('disabled');
+				$('#tenant-opt-dialog .action button.accept').text('Deploy');
+			}, 2000);
+
+		});//end of fail()
+
+	});//end of click()
+}
+
+function initMisc(){
+	$('a[href=#tenant-options-advanced]').click();
+	$('#tenant-options .tenant-info, #tenant-options-basic, #tenant-options-network, #tenant-options-misc').find('input, textarea').attr('readonly', 'true');
+}
+
+</script>

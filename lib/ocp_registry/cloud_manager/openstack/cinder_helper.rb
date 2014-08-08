@@ -8,7 +8,10 @@ module Ocp::Registry
 				CINDER_QUOTA_FIELDS = ["volumes", "snapshots", "gigabytes"]
 
 				def default_volume_quota
-					with_openstack { volume.get_quota_defaults(nil).body["quota_set"] }
+					with_openstack { 
+						hash = volume.get_quota_defaults(nil).body["quota_set"] 
+						Ocp::Registry::Common.hash_filter(hash, CinderHelper)
+					}
 				end
 
 				def set_volume_quota(tenant_id, hash)

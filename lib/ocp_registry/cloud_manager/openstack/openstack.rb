@@ -5,13 +5,13 @@ module Ocp::Registry
 
     class Openstack < CloudManager
 
-      require 'openstack/cinder_helper'
+      require 'openstack/neutron_helper'
       require 'openstack/nova_helper'
       require 'openstack/keystone_helper'
 
       include KeystoneHelper
       include NovaHelper
-      include CinderHelper
+      include NeutronHelper
 
       def initialize(cloud_config)
         validate_options(cloud_config)
@@ -47,9 +47,9 @@ module Ocp::Registry
         @keystone ||= Fog::Identity.new(@openstack_options)
       end
       
-      def volume
-        @volume ||= Fog::Volume.new(@openstack_options)
-      end
+      def network
+        @network ||= Fog::Network.new(@openstack_options)
+      end      
 
       def validate_options(cloud_config)
         unless cloud_config.has_key?("openstack") &&
@@ -67,8 +67,8 @@ module Ocp::Registry
         result = nil
         with_openstack do
           compute_quota = set_compute_quota(tenant_id, settings)
-          volume_quota = set_volume_quota(tenant_id, settings)
-          result =  compute_quota.merge (volume_quota) if (compute_quota && volume_quota)
+          network_quota = set_network_quota(tenant_id, settings)
+          result =  compute_quota.merge (network_quota) if (compute_quota && network_quota)
         end
         cloud_error "Quota for #{tenant_id} has not been set" unless result
         result
@@ -78,8 +78,8 @@ module Ocp::Registry
         return @default_quota if @default_quota
         with_openstack do
           compute_quota = default_compute_quota
-          volume_quota = default_volume_quota
-          @default_quota = compute_quota.merge (volume_quota)
+          network_quota = default_network_quota
+          @default_quota = compute_quota.merge (network_quota)
         end
         cloud_error "Default Quota is not found" unless @default_quota
         @default_quota
@@ -95,6 +95,15 @@ module Ocp::Registry
         @default_role
       end
 
+      def create_tenant_network(tenant_id, settings={})
+        result = nil
+        with_openstack do
+          result = create_network(tenant_id, settings)
+        end
+        cloud_error "Network for #{tenant_id} has not been set" unless result
+        result
+      end
+
       def with_openstack
         retried = false
         begin
@@ -103,7 +112,7 @@ module Ocp::Registry
           unless retried
             retried = true
             @compute = nil
-            @volume = nil
+            @network = nil
             @keystone = nil
             retry
           end

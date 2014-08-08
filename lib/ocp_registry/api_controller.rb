@@ -64,23 +64,29 @@ module Ocp::Registry
         do_response(@application_manager.default, :apply)
       else
     		application = @application_manager.show(params[:id])
-        if("true" == params[:review])
-          protected!
-          if "true" == params[:modified]
-      		  data = application.to_hash(:lazy_load => false, :limit => 20) 
-            view = :admin_review
+        if("true" != params[:deploy])
+          if("true" == params[:review])
+            protected!
+            if "true" == params[:modified]
+        		  data = application.to_hash(:lazy_load => false, :limit => 20) 
+              view = :admin_review
+            else
+              data = application.to_hash(:lazy_load => false, :limit => 10)
+              view = :admin_review
+            end
           else
-            data = application.to_hash(:lazy_load => false, :limit => 10)
-            view = :admin_review
+            if "true" == params[:modified]
+              data = application.to_hash(:lazy_load => false, :limit => 20)
+              view = :applicant_review
+            else
+              data = application.to_hash(:lazy_load => false, :limit => 10)
+              view = :view
+            end
           end
         else
-          if "true" == params[:modified]
-            data = application.to_hash(:lazy_load => false, :limit => 20)
-            view = :applicant_review
-          else
-            data = application.to_hash(:lazy_load => false, :limit => 10)
-            view = :view
-          end
+          protected!
+          data = data = application.to_hash(:lazy_load => false, :limit => 20)
+          view = :admin_deploy
         end
         do_response(data,view)
       end
@@ -161,8 +167,18 @@ module Ocp::Registry
 
     post '/v1/applications/:id/cancel' do
       @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
-
       result = @application_manager.cancel(params[:id])
+      do_response(result.to_hash)
+    end
+
+    post '/v1/applications/:id/deploy' do
+      @logger.info("[RECEIVED] #{request.request_method} : #{request.url} - #{request.ip}")
+      protected!
+
+      app_id = params[:id]
+      setting = Yajl.load(request.body.read)
+
+      result = @application_manager.deploy(app_id, setting)
       do_response(result.to_hash)
     end
 

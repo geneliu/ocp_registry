@@ -37,7 +37,7 @@ function init(){
 }
 
 function initReadonly(){
-	$('#tenant-opt-dialog input').each(function(i,v){
+	$('#tenant-opt-dialog input, #tenant-opt-dialog textarea').each(function(i,v){
 		var $field=$(this);
 		$field.attr('readonly', 'true');
 	});
