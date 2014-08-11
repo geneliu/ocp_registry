@@ -1,4 +1,4 @@
-.tenant-opt input.highlight {
+.tenant-opt input.highlight, .tenant-opt textarea.highlight {
 	background: #FFFFCF;
 }
 

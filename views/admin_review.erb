@@ -38,11 +38,6 @@
 	
 	<div class="action">
 		<button class="hidden inform btn btn-success to-right">Inform Applicant</button>
-		<div class="hidden">
-			&nbsp;&nbsp;&nbsp;&nbsp;Since you have changed the applicant's request, you have to inform the applicant about the change. 
-			<br /><br />
-			&nbsp;&nbsp;&nbsp;&nbsp;After the applicant agrees on the change, you may proceed to approve the request.
-		</div>
 
 		<button class="accept btn btn-success to-right">Accept</button>
 		<button class="reject btn btn-warning to-right">Reject</button>
@@ -71,7 +66,6 @@ var who='<%=who%>';
 $(document).ready(init);
 
 function init(){
-	initInformBtnTooltip();
 	initBackAction();
 	initAcceptAction();
 	initRejectAction();
@@ -82,15 +76,6 @@ function init(){
 	initInformDialogConfirmAction();
 	initInformDialogCancelAction();
 	initChangeQuotasEvent();
-}
-
-function initInformBtnTooltip(){
-	var $btn=$('#tenant-opt-dialog .action button.inform');
-	$btn.qtip({
-		content: {
-			text: $btn.next('div')
-		}
-	});
 }
 
 function initBackAction(){

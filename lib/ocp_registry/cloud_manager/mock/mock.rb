@@ -1,3 +1,4 @@
+# TODO mock and spec are old and not updated to ocpchinalab havana
 module Ocp::Registry
 	  class CloudManager
 

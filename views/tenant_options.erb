@@ -10,12 +10,17 @@
 	#Calculate useful variables
 	whoOppsite=(who=='admin')? 'applicant' : 'admin'
 	compare=(quotas_prev!=nil)		#need to compare current and last version of quotas?
+
+	do_highlight=(defined? enable_highlight)? enable_highlight : true
 %>
 
 <div id="tenant-options" class="tenant-opt">
 	<ul class="nav nav-tabs">
-		<li><a href="#tenant-options-tenant-info" data-toggle="tab">Project Info</a></li>
-		<li><a href="#tenant-options-quota" data-toggle="tab">Quota</a></li>
+		<li><a href="#tenant-options-tenant-info" data-toggle="tab">Project</a></li>
+		<li><a href="#tenant-options-basic" data-toggle="tab">Basic</a></li>
+		<li><a href="#tenant-options-network" data-toggle="tab">Network</a></li>
+		<li><a href="#tenant-options-misc" data-toggle="tab">Misc</a></li>
+		<li><a href="#tenant-options-advanced" data-toggle="tab">Advanced</a></li>
 	</ul>
 	
 	<div class="tab-content to-left">
@@ -29,42 +34,69 @@
 			<label>Email</label>
 			<input type="text" name="email" value="<%=tenant_info[:email]%>" placeholder="Put your valid email address here.">
 		</div>
-		<div class="tab-pane quota" id="tenant-options-quota">
-			<label>Metadata Items</label>
-			<input type="text" name="metadata_items" value="<%=quotas_origin["metadata_items"]%>">
-			
+		<div class="tab-pane quota" id="tenant-options-basic">
 			<label>VCPUs</label>
 			<input type="text" name="cores" value="<%=quotas_origin["cores"]%>">
-			
+
 			<label>Instances</label>
 			<input type="text" name="instances" value="<%=quotas_origin["instances"]%>">
-			
-			<label>Injected Files</label>
-			<input type="text" name="injected_files" value="<%=quotas_origin["injected_files"]%>">
-			
-			<label>Injected Files Content Bytes</label>
-			<input type="text" name="injected_file_content_bytes" value="<%=quotas_origin["injected_file_content_bytes"]%>">
-			
-			<label>Volumes</label>
-			<input type="text" name="volumes" value="<%=quotas_origin["volumes"]%>">
-			
-			<label>Gigabytes</label>
-			<input type="text" name="gigabytes" value="<%=quotas_origin["gigabytes"]%>">
-			
+
 			<label>RAM(MB)</label>
 			<input type="text" name="ram" value="<%=quotas_origin["ram"]%>">
-			
+		</div>
+		<div class="tab-pane quota" id="tenant-options-network">
 			<label>Floating IPs</label>
-			<input type="text" name="floating_ips" value="<%=quotas_origin["floating_ips"]%>">
-			
-			<label>Fixed IPs</label>
-			<input type="text" name="fixed_ips" value="<%=quotas_origin["fixed_ips"]%>">
-			
+			<input type="text" name="floatingip" value="<%=quotas_origin["floatingip"]%>">
+
+			<label>Networks</label>
+			<input type="text" name="network" value="<%=quotas_origin["network"]%>">
+
+			<label>Ports</label>
+			<input type="text" name="port" value="<%=quotas_origin["port"]%>">
+
+			<label>Routers</label>
+			<input type="text" name="router" value="<%=quotas_origin["router"]%>">
+
+			<label>Subnets</label>
+			<input type="text" name="subnet" value="<%=quotas_origin["subnet"]%>">			
+		</div>
+		<div class="tab-pane quota" id="tenant-options-misc">
+			<label>Metadata Items</label>
+			<input type="text" name="metadata_items" value="<%=quotas_origin["metadata_items"]%>">
+
+			<label>Injected Files</label>
+			<input type="text" name="injected_files" value="<%=quotas_origin["injected_files"]%>">
+
+			<label>Injected Files Content Bytes</label>
+			<input type="text" name="injected_file_content_bytes" value="<%=quotas_origin["injected_file_content_bytes"]%>">
+
 			<label>Security Groups</label>
-			<input type="text" name="security_groups" value="<%=quotas_origin["security_groups"]%>">
-			
+			<input type="text" name="security_group" value="<%=quotas_origin["security_group"]%>">
+
 			<label>Security Group Rules</label>
-			<input type="text" name="security_group_rules" value="<%=quotas_origin["security_group_rules"]%>">
+			<input type="text" name="security_group_rule" value="<%=quotas_origin["security_group_rule"]%>">
+		</div>
+		<div class="tab-pane quota" id="tenant-options-advanced">
+			<label>Vlan ID</label>
+			<input type="text" name="vlan_id" value="<%=quotas_origin["vlan_id"]%>" placeholder="Admin fills the blank.">
+
+			<label>Network Name</label>
+			<input type="text" name="network_name" value="<%=quotas_origin["network_name"]%>" placeholder="Admin fills the blank.">
+
+			<label>Subnet Name</label>
+			<input type="text" name="subnet_name" value="<%=quotas_origin["subnet_name"]%>" placeholder="Admin fills the blank.">
+
+			<label>Network Address</label>
+			<input type="text" name="network_address" value="<%=quotas_origin["network_address"]%>" placeholder="Admin fills the blank.">
+
+			<label>Gateway IP</label>
+			<input type="text" name="gateway_ip" value="<%=quotas_origin["gateway_ip"]%>" placeholder="Admin fills the blank.">
+
+			<label>Allocation Pools</label>
+			<textarea name="allocation_pools" placeholder="Admin fills the blank."></textarea>
+
+			<label>DNS Name Servers</label>
+			<textarea name="dns_name_servers" placeholder="Admin fills the blank."></textarea>
 		</div>
 	</div>
 	
@@ -86,8 +118,8 @@ var tenantOpts={
 	restore: function(){},
 
 	getQuotasNow: function(){},
-	quotasOrigin: $.parseJSON('<%=json(quotas_origin)%>'),
-	quotasPrev: $.parseJSON('<%=json(quotas_origin)%>'), 
+	quotasOrigin: <%=json(quotas_origin)%>,
+	quotasPrev: <%=json(quotas_prev)%>, 
 
     getData: function(){}, 
 };
@@ -98,14 +130,26 @@ var tenantOpts={
 
 	var review=$.parseJSON('<%=json(review)%>');
 	var compare=$.parseJSON('<%=json(compare)%>');
+	var enable_highlight=$.parseJSON('<%=json(do_highlight)%>');
 
 	function init(){
+		initTextareaDefaultValue();
 		initTab();
 		initReadonly();
 		initHighlight();
 		initTooltip();
 		initInputEvent();
 		initFunc();
+	}
+
+	/*
+	Use input in textarea can be extract by $('textarea').val(), but not .text().
+	Put text between <textarea> ... text ... </textarea> is ineffective for val().
+	So I have to use javascript ot fill in default value for textareas.
+	*/
+	function initTextareaDefaultValue(){
+		$('textarea[name=allocation_pools]').val(<%=json(quotas_origin["allocation_pools"])%>);
+		$('textarea[name=dns_name_servers]').val(<%=json(quotas_origin["dns_name_servers"])%>);
 	}
 	
 	function initTab(){
@@ -117,26 +161,26 @@ var tenantOpts={
 			return;
 		}
 
-		$('#tenant-options .tenant-info input').attr('readonly', 'true');
+		$('#tenant-options .tenant-info input, #tenant-options .tenant-info textarea').attr('readonly', 'true');
 	}
 
 	function initHighlight(){
-		if(!compare){
+		if(!compare||!enable_highlight){
 			return;
 		}
 
 		$.each(util.whoChanged(tenantOpts.quotasOrigin, tenantOpts.quotasPrev), function(i,v){
-			$('#tenant-options .quota input[name='+i+']').addClass('highlight');
+			$('#tenant-options .quota input[name='+i+'], #tenant-options .quota textarea[name='+i+']').addClass('highlight');
 		});
 	}
 
 	function initTooltip(){
-		if(!compare){
+		if(!compare||!enable_highlight){
 			return;
 		}
 
 		$.each(util.whoChanged(tenantOpts.quotasOrigin, tenantOpts.quotasPrev), function(i,v){
-			var $field=$('#tenant-options .quota input[name='+i+']');
+			var $field=$('#tenant-options .quota input[name='+i+'], #tenant-options .quota textarea[name='+i+']');
 			$field.after('<div class="hidden">'
 							+'The <%=whoOppsite%> proposed a new value here. The original is \'<b>'
 							+((v[0]===undefined)?'':v[1])
@@ -163,7 +207,7 @@ var tenantOpts={
 			}
 		}
 
-		$('#tenant-options .quota input').keydown(function(){
+		$('#tenant-options .quota input, #tenant-options .quota textarea').keydown(function(){
 			var name=$(this).attr('name');
 			onFieldModified(name);
 		});
@@ -176,7 +220,7 @@ var tenantOpts={
 	}
 
 	function addLabelMark(fieldName){
-		var $label=$('#tenant-options .quota input[name='+fieldName+']').prev('label');
+		var $label=$('#tenant-options .quota input[name='+fieldName+'], #tenant-options .quota textarea[name='+fieldName+']').prev('label');
 		if(!($label.text().match(/\*$/))){
 			$label.text($label.text()+' *');
 			$label.css({color: '#CC0000'});
@@ -184,7 +228,7 @@ var tenantOpts={
 	}
 
 	function removeLabelMark(){
-		$('#tenant-options .quota input').each(function(i, v){
+		$('#tenant-options .quota input, #tenant-options .quota textarea').each(function(i, v){
 			var $field=$(this);
 			var $label=$field.prev('label');
 
@@ -197,7 +241,7 @@ var tenantOpts={
 
 	function getQuotasNow(){
 		var ret={};
-		$('#tenant-options .quota input').each(function(){
+		$('#tenant-options .quota input, #tenant-options .quota textarea').each(function(){
 			var $field=$(this);
 			var name=$field.attr('name');
 
@@ -209,7 +253,7 @@ var tenantOpts={
 
 	function getData(){
 		var ret={};
-		$('#tenant-options .tenant-info input').each(function(){
+		$('#tenant-options .tenant-info input, #tenant-options .tenant-info textarea').each(function(){
 			var $field=$(this);
 			var name=$field.attr('name');
 
@@ -222,7 +266,7 @@ var tenantOpts={
 
 	function restore(){
 		removeLabelMark();
-		$('#tenant-options .quota input').each(function(){
+		$('#tenant-options .quota input, #tenant-options .quota textarea').each(function(){
 			var $field=$(this);
 			$field.val(tenantOpts.quotasOrigin[$field.attr('name')]);
 		});

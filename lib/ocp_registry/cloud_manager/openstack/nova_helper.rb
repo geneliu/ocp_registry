@@ -11,14 +11,13 @@ module Ocp::Registry
 				                     "instances",
 				                     "injected_files",
 				                     "injected_file_content_bytes",
-				                     "ram",
-				                     "floating_ips",
-				                     "fixed_ips",
-				                     "security_groups",
-				                     "security_group_rules"]
+				                     "ram"]
 
 				def default_compute_quota
-					with_openstack { compute.get_quota_defaults(nil).body["quota_set"] }
+					with_openstack { 
+						hash = compute.get_quota_defaults(nil).body["quota_set"] 
+						Ocp::Registry::Common.hash_filter(hash, NOVA_QUOTA_FIELDS)
+					}
 				end
 
 				def set_compute_quota(tenant_id, hash)
